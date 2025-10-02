@@ -1,12 +1,14 @@
 
 import os
 import json
+import logging
 from dotenv import load_dotenv
 from config import load_config
 from providers.gemini_client import GeminiClient
 from services.email_analyzer import EmailAnalyzerService
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 config = load_config()
 client = GeminiClient(api_key=config.gemini_api_key, model_name=config.model_name)
 service = EmailAnalyzerService(client=client)
@@ -18,7 +20,8 @@ def analyze_email(email_content: str):
     result = service.analyze(email_content)
     return json.dumps(result, ensure_ascii=False)
 
-if __name__ == "__main__":
+def run_examples():
+    """Executa exemplos de análise de e-mails via CLI."""
     # Example email content (this would come from the ingestion module in a real system)
     emails_para_analisar = {
         "E-mail 1 (Dúvida sobre Transação)": """
@@ -49,7 +52,7 @@ if __name__ == "__main__":
     }
 
     for nome_email, conteudo_email in emails_para_analisar.items():
-        print(f"\n--- Analisando: {nome_email} ---")
+        logging.info("Analisando: %s", nome_email)
         resultado_str = analyze_email(conteudo_email)
 
         try:
@@ -61,4 +64,8 @@ if __name__ == "__main__":
             print(f"  - Sugestão/Ação: {analise.get('sugestao_resposta_ou_acao', 'N/A')}")
         except (json.JSONDecodeError, TypeError):
             # Se a resposta não for um JSON válido (pode ser uma mensagem de erro), imprime diretamente
-            print(resultado_str)
+            logging.error("Falha de JSON: %s", resultado_str)
+
+
+if __name__ == "__main__":
+    run_examples()

@@ -12,6 +12,12 @@ class AppConfig:
     """
     gemini_api_key: str
     model_name: str = "gemini-2.5-flash"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    noreply_address: str = ""
+    curator_address: str = ""
 
 
 def load_config(dotenv_path: Optional[str] = None) -> AppConfig:
@@ -33,9 +39,22 @@ def load_config(dotenv_path: Optional[str] = None) -> AppConfig:
     # Permite override do modelo via env, mas define um padrão seguro
     model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
+    smtp_host = os.getenv("SMTP_HOST", "")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    noreply_address = os.getenv("NOREPLY_ADDRESS", "")
+    curator_address = os.getenv("CURATOR_ADDRESS", "")
+
     return AppConfig(
         gemini_api_key=gemini_api_key,
         model_name=model_name,
+        smtp_host=smtp_host,
+        smtp_port=smtp_port,
+        smtp_user=smtp_user,
+        smtp_password=smtp_password,
+        noreply_address=noreply_address,
+        curator_address=curator_address,
     )
 
 
