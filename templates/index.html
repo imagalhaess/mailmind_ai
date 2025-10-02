@@ -71,15 +71,16 @@
           <input type="file" name="email_file" accept=".txt,.pdf" />
         </div>
         <div class="row">
-          <label>E-mail para resposta automática (opcional)</label>
+          <label>E-mail do remetente original (opcional)</label>
           <input
             type="email"
             name="reply_to"
-            placeholder="usuario@dominio.com"
+            placeholder="remetente@dominio.com"
           />
           <div class="muted">
-            Se o e-mail for improdutivo, enviaremos esta resposta
-            automaticamente.
+            Para emails improdutivos: resposta automática será enviada para este
+            email.<br />
+            Para emails produtivos: será encaminhado para curadoria humana.
           </div>
         </div>
         <div class="row">
