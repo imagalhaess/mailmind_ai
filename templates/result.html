@@ -43,7 +43,20 @@
   </head>
   <body>
     <div class="card">
-      <h1>Resultado da Análise</h1>
+      <h1>Resultado da Análise{% if test_mode %} (Modo Teste){% endif %}</h1>
+      {% if test_mode %}
+      <div
+        style="
+          background: #fef3c7;
+          padding: 1rem;
+          border-radius: 8px;
+          margin-bottom: 1rem;
+        "
+      >
+        <strong>🧪 Teste Automático:</strong> {{ test_type|upper }}<br />
+        <strong>📧 Remetente identificado:</strong> {{ sender_email }}
+      </div>
+      {% endif %}
       <div class="grid">
         <div>
           <div class="label">Categoria</div>
