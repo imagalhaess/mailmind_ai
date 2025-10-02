@@ -3,9 +3,9 @@ import os
 import json
 import logging
 from dotenv import load_dotenv
-from config import load_config
-from providers.gemini_client import GeminiClient
-from services.email_analyzer import EmailAnalyzerService
+from app.config import load_config
+from app.providers.gemini_client import GeminiClient
+from app.services.email_analyzer import EmailAnalyzerService
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')

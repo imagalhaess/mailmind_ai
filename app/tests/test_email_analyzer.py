@@ -1,6 +1,6 @@
 import json
 import pytest
-from services.email_analyzer import EmailAnalyzerService
+from ..services.email_analyzer import EmailAnalyzerService
 
 
 class FakeGeminiClient:

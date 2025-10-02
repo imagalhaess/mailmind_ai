@@ -73,31 +73,44 @@ python main.py
 
 ```
 email_analyzer/
-├── app.py                 # Aplicação Flask (interface web)
-├── main.py               # CLI com exemplos
-├── config.py             # Configurações e validação
-├── providers/
-│   └── gemini_client.py  # Cliente Gemini
-├── services/
-│   └── email_analyzer.py # Lógica de análise
-├── utils/
-│   ├── text_preprocess.py # Pré-processamento NLP
-│   └── email_sender.py   # Envio de e-mails
-├── templates/            # Templates HTML
-├── tests/               # Testes unitários
-└── requirements.txt     # Dependências
+├── app.py                    # 🚀 Ponto de entrada principal
+├── main.py                   # 📝 Exemplo CLI (demonstração)
+├── requirements.txt          # 📦 Dependências Python
+├── .env.example             # 🔐 Template de variáveis de ambiente
+├── app/                     # 📁 Código da aplicação
+│   ├── __init__.py          # 📦 Pacote principal
+│   ├── app.py               # 🌐 Aplicação Flask
+│   ├── config.py            # ⚙️ Configurações
+│   ├── providers/           # 🌐 Provedores externos
+│   │   └── gemini_client.py # 🤖 Cliente Google Gemini
+│   ├── services/            # 🧠 Lógica de negócio
+│   │   └── email_analyzer.py # 📊 Serviço de análise
+│   ├── utils/               # 🛠️ Utilitários
+│   │   ├── text_preprocess.py # 📝 Pré-processamento NLP
+│   │   └── email_sender.py  # 📤 Envio de emails
+│   ├── templates/           # 🎨 Templates HTML
+│   │   ├── index.html       # 🏠 Página principal
+│   │   ├── result.html      # 📄 Resultado individual
+│   │   ├── batch_result.html # 📋 Resultado em lote
+│   │   └── webhook_test.html # 🧪 Teste do webhook
+│   └── tests/               # 🧪 Testes unitários
+│       └── test_email_analyzer.py
+└── docs/                    # 📚 Documentação completa
+    ├── ARCHITECTURE.md       # 🏛️ Arquitetura do sistema
+    ├── BUSINESS_RULES.md     # 📋 Regras de negócio
+    ├── TECHNICAL_DECISIONS.md # 🔧 Decisões técnicas
+    ├── DEVELOPMENT_GUIDE.md  # 👨‍💻 Guia de desenvolvimento
+    ├── PROJECT_STATUS.md     # 📊 Status do projeto
+    ├── webhook_examples.md   # 🔗 Exemplos de webhook
+    └── SETUP_SENDGRID.md    # 📧 Setup SendGrid
 ```
 
 ## 🧪 Testes
 
 ```bash
 pip install pytest
-pytest tests/
+pytest app/tests/
 ```
-
-## 📚 Documentação Adicional
-
-- [Setup SendGrid](SETUP_SENDGRID.md) - Configuração de envio de e-mails
 
 ## 🏗️ Arquitetura
 
@@ -116,6 +129,46 @@ Para produção, use um servidor WSGI como Gunicorn:
 pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 ```
+
+## 🚀 Próximos Passos
+
+### ✅ **Implementado**
+
+- [x] Sistema de análise automática de emails
+- [x] Classificação produtivo/improdutivo via Gemini AI
+- [x] Respostas automáticas para spam
+- [x] Encaminhamento para curadoria humana
+- [x] Análise em lote de múltiplos emails
+- [x] Interface web completa
+- [x] Sistema de envio de emails via SMTP/Gmail
+- [x] Webhook básico para integração
+
+### 🔄 **Em Progresso (WIP)**
+
+- [ ] **Webhook Avançado**: Autenticação, rate limiting, retry logic
+- [ ] **Integração com Email Providers**: Gmail API, Outlook API
+- [ ] **Dashboard Analytics**: Métricas e relatórios
+- [ ] **Machine Learning**: Modelo próprio, fine-tuning
+
+### 📋 **Planejado**
+
+- [ ] Autenticação de usuários
+- [ ] Cache para melhorar performance
+- [ ] Testes automatizados mais abrangentes
+- [ ] Logging estruturado avançado
+- [ ] Monitoramento de saúde da aplicação
+- [ ] Processamento assíncrono (Redis/Celery)
+- [ ] Análise de sentimento avançada
+
+## 📚 Documentação Completa
+
+- **[Status do Projeto](docs/PROJECT_STATUS.md)** - O que está funcionando e próximos passos
+- **[Arquitetura](docs/ARCHITECTURE.md)** - Decisões arquiteturais e estrutura do sistema
+- **[Regras de Negócio](docs/BUSINESS_RULES.md)** - Lógica de classificação e ações automáticas
+- **[Decisões Técnicas](docs/TECHNICAL_DECISIONS.md)** - Por que cada tecnologia foi escolhida
+- **[Guia de Desenvolvimento](docs/DEVELOPMENT_GUIDE.md)** - Como contribuir e desenvolver
+- **[Exemplos de Webhook](docs/webhook_examples.md)** - Guia completo de integração
+- **[Setup SendGrid](docs/SETUP_SENDGRID.md)** - Configuração de envio de e-mails
 
 ## 📝 Licença
 

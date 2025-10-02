@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import json
 import logging
 from typing import Dict, Any
-from providers.gemini_client import GeminiClient
+from ..providers.gemini_client import GeminiClient
 
 
 @dataclass
