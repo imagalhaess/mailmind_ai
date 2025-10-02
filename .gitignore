@@ -1,4 +1,7 @@
-.env
+# Python
 __pycache__/
-venv/
 
+# Environment
+.venv/
+venv/
+.env

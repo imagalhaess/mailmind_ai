@@ -1,8 +1,8 @@
-# Analisador e Curador de E-mails com OpenAI
+# Analisador e Curador de E-mails com IA Generativa
 
 ## Visão Geral
 
-Este projeto implementa um sistema de análise e curadoria de e-mails que utiliza a API da OpenAI para classificar mensagens, resumir seu conteúdo e sugerir respostas automáticas ou ações para e-mails que requerem atenção humana. O objetivo é otimizar o processo de triagem de e-mails, liberando a equipe para focar em tarefas mais complexas.
+Este projeto implementa um sistema de análise e curadoria de e-mails que utiliza uma API de IA Generativa (Google Gemini) para classificar mensagens, resumir seu conteúdo e sugerir respostas automáticas ou ações. O objetivo é otimizar o processo de triagem de e-mails, liberando a equipe para focar em tarefas mais complexas.
 
 ## Arquitetura do Sistema
 
@@ -10,8 +10,8 @@ O sistema é composto pelos seguintes módulos principais:
 
 *   **Módulo de Ingestão de E-mails:** Responsável por receber e-mails de uma caixa de entrada designada (não implementado neste protótipo, mas pode ser integrado via IMAP/POP3 ou Webhooks).
 *   **Módulo de Pré-processamento:** Prepara o conteúdo do e-mail para análise, extraindo texto puro e removendo elementos irrelevantes.
-*   **Módulo de Análise OpenAI:** Interage com a API da OpenAI para classificar o e-mail, gerar um resumo e sugerir uma resposta/ação.
-*   **Módulo de Classificação e Decisão:** Interpreta a saída da OpenAI para determinar se o e-mail exige atenção humana ou pode ser respondido automaticamente.
+*   **Módulo de Análise com IA:** Interage com a API do Google Gemini para classificar o e-mail, gerar um resumo e sugerir uma resposta/ação.
+*   **Módulo de Classificação e Decisão:** Interpreta a saída da IA para determinar se o e-mail exige atenção humana ou pode ser respondido automaticamente.
 *   **Módulo de Respostas Automáticas:** Gera e envia respostas automáticas com base nas sugestões da OpenAI (não implementado neste protótipo, mas pode ser integrado via SMTP).
 
 Para uma descrição mais detalhada da arquitetura, consulte o arquivo `system_architecture.md`.
@@ -22,8 +22,8 @@ Para configurar e executar este projeto, siga os passos abaixo:
 
 ### Pré-requisitos
 
-*   Python 3.8+
-*   Uma chave de API da OpenAI
+*   Python 3.10+
+*   Uma chave de API do Google Gemini
 
 ### Instalação
 
@@ -37,23 +37,23 @@ Para configurar e executar este projeto, siga os passos abaixo:
 2.  **Crie um ambiente virtual (recomendado):**
 
     ```bash
-    python3 -m venv venv
-    source venv/bin/activate  # No Linux/macOS
-    # venv\Scripts\activate   # No Windows
+    python3 -m venv .venv
+    source .venv/bin/activate  # No Linux/macOS
+    # .venv\Scripts\activate   # No Windows
     ```
 
 3.  **Instale as dependências:**
 
     ```bash
-    pip install -r requirements.txt
+    pip install python-dotenv google-generativeai
     ```
 
-4.  **Configure sua chave de API da OpenAI:**
+4.  **Configure sua chave de API do Google Gemini:**
 
-    Crie um arquivo `.env` na raiz do diretório `email_analyzer` com o seguinte conteúdo, substituindo `YOUR_OPENAI_API_KEY` pela sua chave real:
+    Crie um arquivo `.env` na raiz do diretório `email_analyzer` com o seguinte conteúdo, substituindo `SUA_CHAVE_GEMINI_AQUI` pela sua chave real:
 
     ```
-    OPENAI_API_KEY='YOUR_OPENAI_API_KEY'
+    GEMINI_API_KEY='SUA_CHAVE_GEMINI_AQUI'
     ```
 
 ## Uso
@@ -64,7 +64,7 @@ O script `main.py` contém a lógica principal para analisar e-mails de exemplo.
 python main.py
 ```
 
-O script irá processar os e-mails de exemplo definidos internamente e imprimir a análise gerada pela OpenAI no console.
+O script irá processar os e-mails de exemplo definidos internamente e imprimir a análise gerada pela IA no console.
 
 ## Exemplo de Saída
 
@@ -97,7 +97,7 @@ Este projeto segue princípios de boas práticas de programação e Clean Code, 
 *   **Modularização:** O código é dividido em funções lógicas para facilitar a manutenção e o entendimento.
 *   **Nomenclatura Clara:** Variáveis, funções e classes são nomeadas de forma descritiva.
 *   **Comentários e Docstrings:** Funções importantes contêm docstrings explicando seu propósito, argumentos e retorno.
-*   **Tratamento de Erros:** Inclui blocos `try-except` para lidar com possíveis falhas na comunicação com a API da OpenAI.
+*   **Tratamento de Erros:** Inclui blocos `try-except` para lidar com possíveis falhas na comunicação com a API.
 *   **Configuração Externa:** Utiliza um arquivo `.env` para gerenciar chaves de API, evitando que credenciais sejam expostas no código-fonte.
 
 ## Próximos Passos e Melhorias
@@ -107,9 +107,8 @@ Este projeto segue princípios de boas práticas de programação e Clean Code, 
 *   Adicionar um sistema de logging robusto.
 *   Criar testes unitários e de integração.
 *   Desenvolver uma interface de usuário para monitoramento e revisão manual.
-*   Explorar o fine-tuning de modelos da OpenAI para classificações mais precisas e personalizadas.
+*   Explorar o fine-tuning de modelos de IA para classificações mais precisas e personalizadas.
 
 ## Autor
 
 Manus AI
-

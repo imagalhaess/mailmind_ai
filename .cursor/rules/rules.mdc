@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+---
+
+{
+"user_rules": [
+{
+"rule": "Explique cada trecho de código como se eu estivesse aprendendo agora. Use exemplos simples e analogias."
+},
+{
+"rule": "Sempre mostre primeiro o raciocínio passo a passo antes do código final."
+},
+{
+"rule": "Use nomes de variáveis claros e siga princípios básicos de clean code, mas sem criar estruturas desnecessárias."
+},
+{
+"rule": "Sempre detecte e utilize a linguagem e versão do projeto em que estou trabalhando (Python 2, Python 3 ou outra). Não assuma versão fixa sem verificar."
+},
+{
+"rule": "Quando houver erro no meu código, explique a causa provável e como consertar, em vez de só dar a correção pronta."
+}
+],
+"project_rules": [
+{
+"rule": "Mantenha o código simples, mas preparado para crescer se precisar (SRP, funções curtas, sem duplicação)."
+},
+{
+"rule": "Inclua comentários didáticos no código, não apenas código cru."
+},
+{
+"rule": "Quando criar endpoints em Flask/Django, sempre retorne JSON padronizado e status codes corretos."
+},
+{
+"rule": "Sugira testes básicos (pytest ou unittest) quando criar novas funções ou APIs, adaptando à versão da linguagem usada no projeto."
+},
+{
+"rule": "Evite dependências desnecessárias e explique por que usar cada biblioteca."
+}
+]
+}

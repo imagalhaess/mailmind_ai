@@ -1,77 +1,114 @@
 # Arquitetura do Sistema de Análise e Curadoria de E-mails
 
-## 1. Visão Geral
+## Visão Geral
 
-O sistema proposto visa automatizar a triagem e resposta de e-mails, utilizando a inteligência artificial da OpenAI para classificar as mensagens e determinar se necessitam de atenção humana ou podem ser respondidas automaticamente. O fluxo principal envolve a ingestão de e-mails, processamento, análise via API da OpenAI, classificação e, se aplicável, o envio de respostas automáticas.
+Este projeto implementa um sistema de análise e curadoria de e-mails que utiliza uma API de IA Generativa (Google Gemini) para classificar mensagens, resumir seu conteúdo e sugerir respostas automáticas ou ações. O objetivo é otimizar o processo de triagem de e-mails, liberando a equipe para focar em tarefas mais complexas.
 
-## 2. Componentes Principais
+## Arquitetura do Sistema
 
-### 2.1. Módulo de Ingestão de E-mails
+O sistema é composto pelos seguintes módulos principais:
 
-*   **Função:** Responsável por receber e-mails de uma caixa de entrada designada.
-*   **Tecnologia Sugerida:**
-    *   **IMAP/POP3 Client:** Para ler e-mails de um servidor de e-mail existente (e.g., Gmail, Outlook).
-    *   **Webhook/API Gateway:** Se o provedor de e-mail suportar, pode-se configurar webhooks para receber notificações de novos e-mails em tempo real, acionando o processamento.
+*   **Módulo de Ingestão de E-mails:** Responsável por receber e-mails de uma caixa de entrada designada (não implementado neste protótipo, mas pode ser integrado via IMAP/POP3 ou Webhooks).
+*   **Módulo de Pré-processamento:** Prepara o conteúdo do e-mail para análise, extraindo texto puro e removendo elementos irrelevantes.
+*   **Módulo de Análise com IA:** Interage com a API do Google Gemini para classificar o e-mail, gerar um resumo e sugerir uma resposta/ação.
+*   **Módulo de Classificação e Decisão:** Interpreta a saída da IA para determinar se o e-mail exige atenção humana ou pode ser respondido automaticamente.
+*   **Módulo de Respostas Automáticas:** Gera e envia respostas automáticas com base nas sugestões da IA (não implementado neste protótipo, mas pode ser integrado via SMTP).
 
-### 2.2. Módulo de Pré-processamento
+Para uma descrição mais detalhada da arquitetura, consulte este documento.
 
-*   **Função:** Preparar o conteúdo do e-mail para análise pela OpenAI.
-*   **Etapas:**
-    *   Extração de texto puro do corpo do e-mail (removendo HTML, anexos, etc.).
-    *   Remoção de citações anteriores em e-mails de resposta para focar no conteúdo mais recente.
-    *   Normalização de texto (e.g., remoção de caracteres especiais, correção de codificação).
+## Configuração do Ambiente
 
-### 2.3. Módulo de Análise OpenAI
+Para configurar e executar este projeto, siga os passos abaixo:
 
-*   **Função:** Interagir com a API da OpenAI para classificar e analisar o conteúdo do e-mail.
-*   **Tecnologia:** `openai` Python library.
-*   **Processo:**
-    1.  **Chamada à API:** Enviar o texto pré-processado do e-mail para um modelo de linguagem da OpenAI (e.g., GPT-4, GPT-3.5 Turbo).
-    2.  **Prompt Engineering:** O prompt deve instruir a OpenAI a:
-        *   Classificar o e-mail em categorias (e.g., `urgente_humano`, `resposta_automatica_simples`, `informativo`, `spam`).
-        *   Identificar a necessidade de atenção humana (sim/não).
-        *   Gerar um resumo conciso do e-mail.
-        *   Sugerir uma resposta automática, se aplicável.
-        *   Extrair entidades chave (e.g., nome do remetente, número de pedido, tópico principal).
+### Pré-requisitos
 
-### 2.4. Módulo de Classificação e Decisão
+*   Python 3.10+
+*   Uma chave de API do Google Gemini
 
-*   **Função:** Interpretar a saída da OpenAI e tomar decisões sobre o e-mail.
-*   **Lógica:**
-    *   Se a classificação da OpenAI indicar `urgente_humano` ou similar, o e-mail é encaminhado para uma fila de revisão humana.
-    *   Se a classificação indicar `resposta_automatica_simples`, o sistema aciona o módulo de Respostas Automáticas.
-    *   Outras classificações podem ser armazenadas para análise posterior ou arquivamento.
+### Instalação
 
-### 2.5. Módulo de Respostas Automáticas
+1.  **Clone o repositório (ou crie a estrutura de pastas):**
 
-*   **Função:** Gerar e enviar respostas automáticas com base na análise da OpenAI.
-*   **Processo:**
-    1.  Utilizar a resposta sugerida pela OpenAI (ou um template pré-definido preenchido com informações extraídas).
-    2.  Enviar o e-mail de resposta através de um cliente SMTP.
+    ```bash
+    mkdir email_analyzer
+    cd email_analyzer
+    ```
 
-### 2.6. Módulo de Interface/Monitoramento (Opcional)
+2.  **Crie um ambiente virtual (recomendado):**
 
-*   **Função:** Fornecer uma interface para a equipe humana revisar e-mails classificados como `urgente_humano` e monitorar o desempenho do sistema.
-*   **Tecnologia Sugerida:** Uma aplicação web simples (e.g., Flask, Django) com um dashboard.
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate  # No Linux/macOS
+    # .venv\Scripts\activate   # No Windows
+    ```
 
-## 3. Fluxo de Trabalho
+3.  **Instale as dependências:**
 
-1.  Novo e-mail chega e é capturado pelo **Módulo de Ingestão**.
-2.  O e-mail é passado para o **Módulo de Pré-processamento** para limpeza.
-3.  O texto limpo é enviado ao **Módulo de Análise OpenAI** para classificação, resumo e sugestão de resposta.
-4.  A saída da OpenAI é processada pelo **Módulo de Classificação e Decisão**.
-5.  **Decisão 1: Atenção Humana?**
-    *   Se sim, o e-mail é movido para uma fila de revisão humana (e.g., um banco de dados ou outra caixa de entrada).
-    *   Uma notificação pode ser enviada à equipe responsável.
-6.  **Decisão 2: Resposta Automática?**
-    *   Se sim, o **Módulo de Respostas Automáticas** envia a resposta sugerida.
-7.  Todos os e-mails e suas classificações/respostas são logados para auditoria e melhoria contínua.
+    ```bash
+    pip install python-dotenv google-generativeai
+    ```
 
-## 4. Considerações de Implementação
+4.  **Configure sua chave de API do Google Gemini:**
 
-*   **Segurança:** Gerenciamento seguro de credenciais da API OpenAI e de e-mail.
-*   **Escalabilidade:** Projetar o sistema para lidar com um alto volume de e-mails.
-*   **Feedback Loop:** Implementar um mecanismo para que a equipe humana possa corrigir classificações e respostas, treinando e refinando o modelo da OpenAI (via fine-tuning ou ajustes de prompt).
-*   **Tratamento de Erros:** Robustez para lidar com falhas na API, e-mails mal formatados, etc.
+    Crie um arquivo `.env` na raiz do diretório `email_analyzer` com o seguinte conteúdo, substituindo `SUA_CHAVE_GEMINI_AQUI` pela sua chave real:
 
-Este documento serve como base para a implementação do sistema. As tecnologias específicas podem ser ajustadas conforme a necessidade e o ambiente de implantação.
+    ```
+    GEMINI_API_KEY='SUA_CHAVE_GEMINI_AQUI'
+    ```
+
+## Uso
+
+O script `main.py` contém a lógica principal para analisar e-mails de exemplo. Para executá-lo:
+
+```bash
+python main.py
+```
+
+O script irá processar os e-mails de exemplo definidos internamente e imprimir a análise gerada pela IA no console.
+
+## Exemplo de Saída
+
+Para um e-mail que requer atenção humana:
+
+```json
+{
+    "atencao_humana": "SIM",
+    "categoria": "Dúvida sobre Transação",
+    "resumo": "O cliente João Silva questiona um débito de R$ 250,00 realizado em 28/09/2025, alegando não reconhecer a transação e solicitando verificação.",
+    "sugestao_resposta_ou_acao": "Encaminhar para a equipe de atendimento ao cliente/fraude para investigar a transação de R$ 250,00 debitada em 28/09/2025 e entrar em contato com o cliente João Silva para esclarecimentos."
+}
+```
+
+Para um e-mail que pode ser respondido automaticamente:
+
+```json
+{
+    "atencao_humana": "NÃO",
+    "categoria": "Informação Geral",
+    "resumo": "Maria Souza enviou uma mensagem de Feliz Natal e próspero Ano Novo para a equipe.",
+    "sugestao_resposta_ou_acao": "Prezado(a) Maria Souza,\n\nAgradecemos imensamente sua mensagem e desejamos a você também um Feliz Natal e um próspero Ano Novo!\n\nBoas festas!\n\nAtenciosamente,\n[Nome da Equipe/Empresa]"
+}
+```
+
+## Boas Práticas e Clean Code
+
+Este projeto segue princípios de boas práticas de programação e Clean Code, incluindo:
+
+*   **Modularização:** O código é dividido em funções lógicas para facilitar a manutenção e o entendimento.
+*   **Nomenclatura Clara:** Variáveis, funções e classes são nomeadas de forma descritiva.
+*   **Comentários e Docstrings:** Funções importantes contêm docstrings explicando seu propósito, argumentos e retorno.
+*   **Tratamento de Erros:** Inclui blocos `try-except` para lidar com possíveis falhas na comunicação com a API.
+*   **Configuração Externa:** Utiliza um arquivo `.env` para gerenciar chaves de API, evitando que credenciais sejam expostas no código-fonte.
+
+## Próximos Passos e Melhorias
+
+*   Implementar o módulo de ingestão de e-mails (IMAP/POP3 ou Webhooks).
+*   Implementar o módulo de envio de respostas automáticas (SMTP).
+*   Adicionar um sistema de logging robusto.
+*   Criar testes unitários e de integração.
+*   Desenvolver uma interface de usuário para monitoramento e revisão manual.
+*   Explorar o fine-tuning de modelos de IA para classificações mais precisas e personalizadas.
+
+## Autor
+
+Manus AI
