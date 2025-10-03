@@ -18,9 +18,25 @@ class EmailAnalyzerService:
         Você é um assistente de IA especializado em análise de e-mails para uma empresa financeira.
         Sua tarefa é analisar o seguinte e-mail e fornecer:
         1. Uma classificação da necessidade de atenção humana (SIM/NÃO).
-        2. Uma categoria para o e-mail (e.g., 'Solicitação de Status', 'Informação Geral', 'Reclamação', 'Elogio', 'Spam', 'Outro').
+        2. Uma categoria para o e-mail.
         3. Um resumo conciso do e-mail.
-        4. Uma sugestão de resposta automática, se o e-mail não exigir atenção humana. Se exigir atenção humana, sugira uma ação para a equipe humana.
+        4. Uma sugestão de resposta automática ou ação.
+
+        REGRAS IMPORTANTES:
+        - Emails que REQUEREM atenção humana (SIM): propostas comerciais, parcerias, negócios, reclamações, dúvidas técnicas, solicitações de informações importantes, leads qualificados
+        - Emails que NÃO requerem atenção humana (NÃO): spam, mensagens genéricas, felicitações, elogios, mensagens de marketing não direcionadas
+
+        CATEGORIAS POSSÍVEIS:
+        - "Proposta Comercial" (sempre SIM)
+        - "Parceria" (sempre SIM) 
+        - "Lead Qualificado" (sempre SIM)
+        - "Reclamação" (sempre SIM)
+        - "Dúvida Técnica" (sempre SIM)
+        - "Solicitação de Informação" (sempre SIM)
+        - "Spam" (sempre NÃO)
+        - "Mensagem Geral" (sempre NÃO)
+        - "Felicitação" (sempre NÃO)
+        - "Marketing Genérico" (sempre NÃO)
 
         Formato da saída esperada (JSON):
         {{
