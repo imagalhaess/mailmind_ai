@@ -41,7 +41,40 @@ def read_text_from_upload() -> Tuple[str, str]:
     if filename.endswith(".pdf"):
         with io.BytesIO(data) as buf:
             text = extract_text(buf)
-        return text, "pdf"
+            if text:
+                # Melhor limpeza do texto PDF
+                # Primeiro, preserva quebras de linha que podem ser importantes para separar emails
+                lines = text.split('\n')
+                cleaned_lines = []
+                
+                for line in lines:
+                    # Remove espaços extras mas preserva a linha se não estiver vazia
+                    cleaned_line = ' '.join(line.split())
+                    if cleaned_line.strip():
+                        cleaned_lines.append(cleaned_line)
+                
+                # Reconstrói o texto preservando estrutura
+                cleaned_text = '\n'.join(cleaned_lines)
+                
+                # Se o texto está muito fragmentado, tenta uma abordagem diferente
+                if len(cleaned_text.split()) < 20:  # Muito poucas palavras
+                    # Tentar extrair texto de forma mais agressiva
+                    words = text.replace('\n', ' ').replace('\r', ' ').split()
+                    reconstructed = []
+                    for word in words:
+                        # Remove caracteres especiais mas mantém palavras válidas
+                        clean_word = ''.join(c for c in word if c.isalnum() or c in '@.-_')
+                        if len(clean_word) > 1:  # Ignorar caracteres únicos
+                            reconstructed.append(clean_word)
+                    cleaned_text = ' '.join(reconstructed)
+                
+                # Se ainda estiver muito curto, usar fallback mais informativo
+                if len(cleaned_text.strip()) < 30:
+                    cleaned_text = f"Conteúdo PDF extraído com dificuldade. Texto original: {text[:200]}..."
+                
+                logging.info(f"PDF extraído: {len(cleaned_text)} caracteres")
+                return cleaned_text, "pdf"
+        return "", "pdf"
 
     return "", "unsupported"
 
@@ -172,23 +205,52 @@ def split_multiple_emails(content: str) -> list:
     """Divide um arquivo com múltiplos emails em uma lista de emails individuais."""
     import re
     
-    # Padrões para identificar início de novos emails
+    # Padrões para identificar início de novos emails (mais flexíveis para PDFs)
     email_separators = [
-        r'\n\nFrom:',
-        r'\n\nDe:',
-        r'\n\nRemetente:',
-        r'\n\nSender:',
-        r'\n\n---',
-        r'\n\n===',
-        r'\n\nMessage-ID:',
-        r'\n\nDate:',
+        # Padrões com quebras de linha duplas
+        r'\n\nFrom:\s+[^\n]+@[^\n]+\.[^\n]+',  # From: email@domain.com
+        r'\n\nDe:\s+[^\n]+@[^\n]+\.[^\n]+',   # De: email@domain.com
+        r'\n\nRemetente:\s+[^\n]+@[^\n]+\.[^\n]+',  # Remetente: email@domain.com
+        r'\n\nSender:\s+[^\n]+@[^\n]+\.[^\n]+',    # Sender: email@domain.com
+        
+        # Padrões com quebras de linha simples (para PDFs mal formatados)
+        r'\nFrom:\s+[^\n]+@[^\n]+\.[^\n]+',  # From: email@domain.com
+        r'\nDe:\s+[^\n]+@[^\n]+\.[^\n]+',   # De: email@domain.com
+        r'\nRemetente:\s+[^\n]+@[^\n]+\.[^\n]+',  # Remetente: email@domain.com
+        r'\nSender:\s+[^\n]+@[^\n]+\.[^\n]+',    # Sender: email@domain.com
+        
+        # Separadores explícitos
+        r'\n\n---\n',  # Separador explícito
+        r'\n\n===\n',  # Separador explícito
+        r'\n---\n',    # Separador com uma quebra de linha
+        r'\n===\n',    # Separador com uma quebra de linha
+        
+        # Headers de email
+        r'\n\nMessage-ID:\s+<[^>]+>',  # Message-ID: <id>
+        r'\nMessage-ID:\s+<[^>]+>',    # Message-ID: <id> (uma quebra)
+        r'\n\nDate:\s+\w{3},\s+\d{1,2}\s+\w{3}\s+\d{4}',  # Date completa
+        r'\nDate:\s+\w{3},\s+\d{1,2}\s+\w{3}\s+\d{4}',    # Date (uma quebra)
     ]
     
-    # Se não encontrar separadores, trata como um único email
+    # Verifica se há múltiplos emails
+    separator_count = 0
+    for separator in email_separators:
+        matches = re.findall(separator, content, re.IGNORECASE)
+        separator_count += len(matches)
+    
+    logging.info(f"Encontrados {separator_count} separadores de email no conteúdo")
+    
+    # Se não encontrar separadores suficientes, trata como um único email
+    if separator_count == 0:
+        logging.info("Nenhum separador encontrado, tratando como email único")
+        return [content]
+    
+    # Se encontrar separadores, divide o conteúdo
     emails = [content]
     
     for separator in email_separators:
         if re.search(separator, content, re.IGNORECASE):
+            logging.info(f"Dividindo por separador: {separator}")
             # Divide pelos separadores encontrados
             parts = re.split(separator, content, flags=re.IGNORECASE)
             emails = []
@@ -199,12 +261,20 @@ def split_multiple_emails(content: str) -> list:
                         emails.append(part.strip())
                 else:
                     # Partes subsequentes - adiciona o separador de volta
-                    separator_text = re.search(separator, content, re.IGNORECASE).group()
-                    emails.append(separator_text + part.strip())
+                    separator_match = re.search(separator, content, re.IGNORECASE)
+                    if separator_match:
+                        separator_text = separator_match.group()
+                        emails.append(separator_text + part.strip())
             break
     
     # Remove emails vazios e limpa
     emails = [email.strip() for email in emails if email.strip()]
+    
+    logging.info(f"Dividido em {len(emails)} emails")
+    
+    # Se só temos um email após a divisão, retorna como lista com um item
+    if len(emails) == 1:
+        return emails
     
     return emails
 
@@ -681,10 +751,37 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
         else:
             # Análise individual - um email
             preprocessed = basic_preprocess(raw_text)
-            result = service.analyze(preprocessed)
+            try:
+                result = service.analyze(preprocessed)
+            except ValueError as e:
+                if "Resposta inválida do Gemini" in str(e):
+                    # Se for PDF e Gemini falhar, retorna análise básica
+                    if origin == "pdf":
+                        return jsonify({
+                            "categoria": "Conteúdo PDF",
+                            "atencao_humana": "SIM",
+                            "resumo": "Arquivo PDF processado com dificuldade. Requer análise manual.",
+                            "sugestao": "Revisar manualmente o conteúdo do PDF para análise adequada.",
+                            "acao_executada": "📄 PDF processado - requer análise manual",
+                            "origem": origin
+                        })
+                    # Para outros casos, retorna erro genérico
+                    return jsonify({"error": "Erro na análise do email. Tente novamente."}), 500
+                else:
+                    raise e
             
             # Verifica se a análise foi bem-sucedida
             if not result or 'categoria' not in result:
+                # Se for PDF e falhar, retorna análise básica
+                if origin == "pdf":
+                    return jsonify({
+                        "categoria": "Conteúdo PDF",
+                        "atencao_humana": "SIM",
+                        "resumo": "Arquivo PDF processado com dificuldade. Requer análise manual.",
+                        "sugestao": "Revisar manualmente o conteúdo do PDF para análise adequada.",
+                        "acao_executada": "📄 PDF processado - requer análise manual",
+                        "origem": origin
+                    })
                 return jsonify({"error": "Erro na análise do email. Tente novamente."}), 500
             
             # result é dict; convertemos para exibição
