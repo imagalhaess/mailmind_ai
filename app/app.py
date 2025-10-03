@@ -67,6 +67,103 @@ def extract_sender_from_email(email_content: str) -> str:
     return ""
 
 
+def generate_automatic_response(sugestao, categoria, email_content):
+    """Gera uma resposta automática personalizada usando IA"""
+    try:
+        from .services.email_analyzer import EmailAnalyzerService
+        
+        analyzer = EmailAnalyzerService()
+        
+        # Prompt melhorado para gerar resposta automática
+        prompt = f"""
+        Você é um assistente de IA especializado em gerar respostas automáticas educadas e personalizadas para emails corporativos.
+
+        CONTEXTO:
+        - Empresa: MailMind (sistema de análise de emails)
+        - Categoria do email recebido: "{categoria}"
+        - Sugestão de ação: "{sugestao}"
+        - Conteúdo original do email: "{email_content[:500]}..."
+
+        INSTRUÇÕES ESPECÍFICAS:
+        Gere uma resposta automática completa e personalizada que:
+
+        1. **ABERTURA CORDIAL**: Comece com "Olá," seguido de agradecimento específico
+        2. **EXPLICAÇÃO CLARA**: Explique que a mensagem foi analisada automaticamente pelo sistema MailMind
+        3. **RESPOSTA CONTEXTUAL**: Baseie sua resposta na categoria específica:
+           - Para "Felicitação": Agradeça pelos elogios e reconhecimento
+           - Para "Mensagem Geral": Agradeça pelo contato e interesse
+           - Para "Marketing Genérico": Agradeça mas indique que não é relevante
+        4. **ORIENTAÇÃO CLARA**: Indique que não requer atenção imediata da equipe
+        5. **CANAL ALTERNATIVO**: Sugira contato através dos canais oficiais se necessário
+        6. **INSTRUÇÃO IMPORTANTE**: Inclua "Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço."
+        7. **ASSINATURA**: Termine com "Atenciosamente, Equipe MailMind"
+
+        FORMATO DA RESPOSTA:
+        - Use parágrafos bem estruturados
+        - Mantenha tom profissional mas caloroso
+        - Seja específico baseado no conteúdo recebido
+        - Não inclua aspas ou formatação especial
+        - A resposta deve estar pronta para envio direto
+
+        Gere uma resposta completa e personalizada agora:
+        """
+        
+        logging.info(f"Gerando resposta automática para categoria: {categoria}")
+        logging.info(f"Sugestão: {sugestao}")
+        
+        # Debug: print direto para ver se a função está sendo executada
+        print(f"DEBUG: Gerando resposta automática para categoria: {categoria}")
+        print(f"DEBUG: Sugestão: {sugestao}")
+        
+        response = analyzer.client.generate_content(prompt)
+        
+        logging.info(f"Tipo da resposta: {type(response)}")
+        logging.info(f"Resposta: {response}")
+        print(f"DEBUG: Tipo da resposta: {type(response)}")
+        print(f"DEBUG: Resposta: {response}")
+        
+        if response and hasattr(response, 'text') and response.text:
+            logging.info("Resposta automática gerada com sucesso via response.text")
+            print(f"DEBUG: Resposta automática gerada: {response.text}")
+            return response.text.strip()
+        elif response and hasattr(response, 'candidates') and response.candidates:
+            # Fallback para estrutura diferente de resposta
+            candidate = response.candidates[0]
+            if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                logging.info("Resposta automática gerada com sucesso via candidates")
+                print(f"DEBUG: Resposta automática gerada via candidates: {candidate.content.parts[0].text}")
+                return candidate.content.parts[0].text.strip()
+        else:
+            # Fallback para resposta padrão
+            return f"""Olá,
+
+Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
+
+{sugestao}
+
+Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
+
+Atenciosamente,
+Equipe MailMind
+MailMind System"""
+            
+    except Exception as e:
+        logging.error(f"Erro ao gerar resposta automática: {e}")
+        logging.error(f"Tipo de erro: {type(e).__name__}")
+        # Fallback para resposta padrão
+        return f"""Olá,
+
+Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
+
+{sugestao}
+
+Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
+
+Atenciosamente,
+Equipe MailMind
+MailMind System"""
+
+
 def split_multiple_emails(content: str) -> list:
     """Divide um arquivo com múltiplos emails em uma lista de emails individuais."""
     import re
@@ -140,18 +237,8 @@ def analyze_batch_emails(emails: list, service, mailer, config) -> list:
                 if categoria.lower() == "spam":
                     action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
                 else:
-                    # Resposta automática para outros tipos de improdutivos (felicitações, etc.)
-                    response_body = f"""Olá,
-
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
-
-{sugestao}
-
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
-
-Atenciosamente,
-Equipe MailMind
-MailMind System"""
+                    # Gerar resposta automática personalizada usando IA
+                    response_body = generate_automatic_response(sugestao, categoria, email_content)
                     
                     if mailer:
                         mailer.send(
@@ -254,6 +341,25 @@ Maria Santos
 CEO - TechStartup""",
             "expected_sender": "parceiro@startup.com",
             "expected_category": "PRODUTIVO"
+        },
+        "felicitacao": {
+            "content": """From: cliente@empresa.com
+Subject: Parabéns pelo excelente trabalho!
+
+Olá equipe,
+
+Gostaria de parabenizar vocês pelo excelente trabalho realizado este ano. 
+A empresa está de parabéns pelos resultados alcançados e pela qualidade 
+dos serviços prestados.
+
+Desejamos muito sucesso para os próximos anos e que continuem com esse 
+padrão de excelência!
+
+Atenciosamente,
+João Silva
+Cliente satisfeito""",
+            "expected_sender": "cliente@empresa.com",
+            "expected_category": "IMPRODUTIVO"
         }
     }
 
@@ -389,18 +495,8 @@ Subject: {subject}
                     if categoria.lower() == "spam":
                         action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
                     else:
-                        # Resposta automática para outros tipos de improdutivos (felicitações, etc.)
-                        response_body = f"""Olá,
-
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
-
-{sugestao}
-
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
-
-Atenciosamente,
-Equipe MailMind
-MailMind System"""
+                        # Gerar resposta automática personalizada usando IA
+                        response_body = generate_automatic_response(sugestao, categoria, email_content)
                         
                         if mailer:
                             mailer.send(
@@ -510,17 +606,8 @@ Este email foi automaticamente encaminhado pelo sistema MailMind via webhook."""
             if categoria.lower() == "spam":
                 action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
             else:
-                response_body = f"""Olá,
-
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
-
-{sugestao}
-
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
-
-Atenciosamente,
-Equipe MailMind
-MailMind System"""
+                # Gerar resposta automática personalizada usando IA
+                response_body = generate_automatic_response(sugestao, categoria, data["content"])
                 
                 if mailer:
                     mailer.send(
@@ -623,21 +710,15 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                     if categoria.lower() == "spam":
                         action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
                         logging.info(f"Spam detectado - nenhuma resposta enviada para: {sender_email}")
+                        print(f"DEBUG: Spam detectado - categoria: {categoria}")
                     else:
+                        print(f"DEBUG: Email improdutivo não-spam - categoria: {categoria}")
                         # Para outros emails IMPRODUTIVOS: responder automaticamente para o REMETENTE ORIGINAL
                         if sender_email:
-                            # Conteúdo mais detalhado da resposta automática
-                            response_body = f"""Olá,
-
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
-
-{sugestao}
-
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
-
-Atenciosamente,
-Equipe MailMind
-MailMind System"""
+                            print(f"DEBUG: Chamando generate_automatic_response para categoria: {categoria}")
+                            # Gerar resposta automática personalizada usando IA
+                            response_body = generate_automatic_response(sugestao, categoria, raw_text)
+                            print(f"DEBUG: Resposta gerada: {response_body[:100]}...")
                         
                             # Tentar enviar com fallback automático
                             email_sent = False
