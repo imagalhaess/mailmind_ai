@@ -83,7 +83,7 @@ MailMind System
 
 **Ação**: Encaminhamento para **curadoria humana**
 
-**Destinatário**: `autoucase@tuamaeaquelaursa.com` (configurável)
+**Destinatário**: `curador@suaempresa.com` (configurável)
 
 **Conteúdo do Encaminhamento**:
 
