@@ -84,12 +84,12 @@ SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
 SMTP_USER=apikey
 SMTP_PASSWORD=SG.xxx
-NOREPLY_ADDRESS=mailmindai25@gmail.com
+NOREPLY_ADDRESS=seu_email@gmail.com
 
 # Gmail (fallback)
 GMAIL_SMTP_HOST=smtp.gmail.com
 GMAIL_SMTP_PORT=587
-GMAIL_SMTP_USER=mailmindai25@gmail.com
+GMAIL_SMTP_USER=seu_email@gmail.com
 GMAIL_SMTP_PASSWORD=xxx
 ```
 

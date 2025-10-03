@@ -959,13 +959,18 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
         """Serve assets do React (JS, CSS)"""
         return send_from_directory('static/assets', filename)
 
+    @app.route('/docs/<path:filename>')
+    def serve_docs(filename):
+        """Serve documentação (LGPD, etc.)"""
+        return send_from_directory('../docs', filename)
+
     # Rota catch-all para SPA (Single Page Application) - deve ser a última rota
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def serve_react_app(path):
         """Serve a aplicação React para todas as rotas não-API"""
         # Se for uma rota de API, não servir o React
-        if path.startswith('api/') or path.startswith('webhook/') or path.startswith('test/') or path.startswith('analyze') or path.startswith('health') or path.startswith('static/'):
+        if path.startswith('api/') or path.startswith('webhook/') or path.startswith('test/') or path.startswith('analyze') or path.startswith('health') or path.startswith('static/') or path.startswith('docs/'):
             return jsonify({'error': 'Not found'}), 404
         
         # Serve o index.html do React

@@ -83,7 +83,7 @@ python app.py
 
 1. Acesse sua caixa de entrada do email informado
 2. Verifique também a pasta de spam/lixo eletrônico
-3. Você deve ver um email de `mailmindai25@gmail.com` com assunto "Resposta automática - Email Analyzer"
+3. Você deve ver um email de `seu_email@gmail.com` com assunto "Resposta automática - Email Analyzer"
 
 ### Teste 2: Email Produtivo - Encaminhamento para Curadoria
 
