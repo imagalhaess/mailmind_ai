@@ -21,7 +21,7 @@ GMAIL_SMTP_PORT=587
 GMAIL_SMTP_USER=seu_email@gmail.com
 GMAIL_SMTP_PASSWORD=sua_senha_app_gmail
 NOREPLY_ADDRESS=noreply@seudominio.com
-CURATOR_ADDRESS=autoucase@tuamaeaquelaursa.com
+CURATOR_ADDRESS=curador@suaempresa.com
 ```
 
 ## 🚀 Como Executar a Aplicação
@@ -118,15 +118,23 @@ python app.py
 - ✅ Categoria: "Parceria" ou "Produtivo"
 - ✅ Atenção Humana: "SIM"
 - ✅ Ação: "ENVIADO para CURADORIA HUMANA"
-- ✅ Email encaminhado para: `autoucase@tuamaeaquelaursa.com`
+- ✅ Email encaminhado para: `curador@suaempresa.com`
 
 ### Teste 3: Upload de Arquivo
 
-**Objetivo**: Testar análise de emails via upload de arquivo.
+**Objetivo**: Testar análise de emails via upload de arquivo (.txt ou .pdf).
+
+**Arquivos de teste disponíveis**:
+- `app/tests/teste_email.txt` - Email simples
+- `app/tests/teste_email.pdf` - Email em PDF
+- `app/tests/email_teste.pdf` - Múltiplos emails em PDF
 
 **Passos**:
 
-1. Crie um arquivo `test_email.txt` com o conteúdo:
+1. **Para teste simples**: Use o arquivo `teste_email.txt` já disponível em `app/tests/`
+2. **Para teste com PDF**: Use o arquivo `teste_email.pdf` já disponível em `app/tests/`
+3. **Para teste com múltiplos emails**: Use o arquivo `email_teste.pdf` já disponível em `app/tests/`
+4. **Ou crie um novo arquivo** `test_email.txt` com o conteúdo:
 
    ```
    From: cliente@empresa.com
@@ -141,17 +149,19 @@ python app.py
    João Silva
    ```
 
-2. Na aba "Análise de Email":
+5. Na aba "Análise de Email":
    - **Tipo de entrada**: Selecione "Arquivo"
-   - **Arquivo**: Faça upload do `test_email.txt`
+   - **Arquivo**: Faça upload de qualquer um dos arquivos de teste
    - **Email do Remetente**: `seu_email@exemplo.com`
-3. Clique em "Analisar Email"
+6. Clique em "Analisar Email"
 
 **Resultado Esperado**:
 
 - ✅ Categoria: "Solicitação" ou "Produtivo"
 - ✅ Atenção Humana: "SIM"
 - ✅ Resumo: Deve identificar solicitação de orçamento
+- ✅ **Para PDFs**: Pode processar múltiplos emails e mostrar contagem correta
+- ✅ **Para múltiplos emails**: Mostra "Total de emails processados: X"
 
 ### Teste 4: Testes Automáticos (Mock)
 
@@ -332,13 +342,13 @@ O MailMind usa um sistema robusto de fallback para envio de emails:
 
 ## 📬 Email de Curadoria
 
-**Email configurado**: `autocase_curador@tuamaeaquelaursa.com`
+**Email configurado**: `curador@suaempresa.com`
 
 ### Como Acessar o Email de Curadoria:
 
-1. **Acesse**: https://tuamaeaquelaursa.com
-2. **Clique em**: "exemplo@tuamaeaquelaursa"
-3. **Digite o email**: `autocase_curador`
+1. **Acesse**: https://seudominio.com
+2. **Clique em**: "Acessar Email" ou "Email Login"
+3. **Digite o email**: `curador`
 
 ### O que Você Verá:
 
@@ -350,7 +360,7 @@ O MailMind usa um sistema robusto de fallback para envio de emails:
 ### Testando o Encaminhamento:
 
 1. Envie um email **produtivo** (proposta comercial, parceria, etc.)
-2. Verifique se aparece na caixa de entrada do `autocase_curador@tuamaeaquelaursa.com`
+2. Verifique se aparece na caixa de entrada do `curador@suaempresa.com`
 3. Confirme que o conteúdo está completo e legível
 
 ## 🎯 Checklist de Testes Completos
@@ -372,7 +382,7 @@ O MailMind usa um sistema robusto de fallback para envio de emails:
 Após completar todos os testes:
 
 1. **Deploy**: Consulte `docs/DEPLOY_GUIDE.md`
-2. **Integração**: Consulte `docs/WEBHOOK_EXAMPLES.md`
+2. **Integração**: Consulte `docs/DEPLOY_GUIDE.md` para webhook
 3. **Desenvolvimento**: Consulte `docs/DEVELOPMENT_GUIDE.md`
 
 ---

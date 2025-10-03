@@ -21,7 +21,7 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 1. **Clone e configure o ambiente:**
 
    ```bash
-   git clone <https://github.com/imagalhaess/email_analyzer.git>
+   git clone https://github.com/seu-usuario/seu-repositorio.git
    cd email_analyzer
    python3 -m venv .venv
    source .venv/bin/activate  # Linux/macOS
@@ -114,7 +114,7 @@ python app.py
 
 ### Guia Completo de Testes
 
-Consulte **[Guia de Testes](docs/TESTING_GUIDE.md)** para instruções detalhadas sobre:
+Consulte **[Guia de Testes](app/tests/TESTING_GUIDE.md)** para instruções detalhadas sobre:
 
 - ✅ Como testar todas as funcionalidades
 - ✅ Use qualquer email real para receber as mensagens
@@ -172,7 +172,7 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 
 ## 📚 Documentação Completa
 
-- **[Guia de Testes](docs/TESTING_GUIDE.md)** - 🧪 Como testar todas as funcionalidades
+- **[Guia de Testes](app/tests/TESTING_GUIDE.md)** - 🧪 Como testar todas as funcionalidades
 - **[Status do Projeto](docs/PROJECT_STATUS.md)** - 📊 O que está funcionando e próximos passos
 - **[Arquitetura](docs/ARCHITECTURE.md)** - 🏛️ Decisões arquiteturais e estrutura do sistema
 - **[Regras de Negócio](docs/BUSINESS_RULES.md)** - 📋 Lógica de classificação e ações automáticas

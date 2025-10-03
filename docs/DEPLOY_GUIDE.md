@@ -28,9 +28,9 @@
 
 ### Pré-requisitos
 
-- ✅ Conta no GitHub (já temos)
+- ✅ Conta no GitHub
 - ✅ Conta no Railway (criar gratuitamente)
-- ✅ Projeto commitado no GitHub (já feito)
+- ✅ Projeto commitado no GitHub
 
 ### Passos para Deploy
 

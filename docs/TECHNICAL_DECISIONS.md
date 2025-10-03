@@ -1,4 +1,4 @@
-# 🔧 Decisões Técnicas - Email Analyzer
+# 🔧 Decisões Técnicas - Mail Mind
 
 ## 📋 Visão Geral
 
@@ -450,11 +450,13 @@ if atencao.upper() == "NÃO":
 **Categorias de Comportamento**:
 
 1. **Spam** (`categoria.lower() == "spam"`)
+
    - ❌ **Nenhuma resposta automática**
    - ✅ **Apenas sugestão de ação** (marcar como spam, bloquear, excluir)
    - ✅ **Log de detecção** para monitoramento
 
 2. **Outros Improdutivos** (felicitações, mensagens genéricas)
+
    - ✅ **Resposta automática educada**
    - ✅ **Agradecimento e redirecionamento**
    - ✅ **Instrução para não responder**
@@ -481,6 +483,7 @@ if atencao.upper() == "NÃO":
 **Implementação**:
 
 A lógica foi aplicada em todas as funções de processamento:
+
 - `analyze_batch_emails()` - Processamento em lote
 - Webhook `/webhook/email` - Processamento via webhook
 - Testes mock `/test/*` - Dados de teste
@@ -533,22 +536,22 @@ A lógica foi aplicada em todas as funções de processamento:
 
 ## 📝 **Resumo das Decisões**
 
-| Aspecto           | Decisão              | Motivação Principal |
-| ----------------- | -------------------- | ------------------- |
-| **IA**            | Google Gemini        | Custo-benefício     |
-| **Framework**     | Flask                | Simplicidade        |
-| **Estrutura**     | Por responsabilidade | Clean Architecture  |
-| **Config**        | .env                 | Segurança           |
-| **Email**         | SMTP + Gmail         | Simplicidade        |
+| Aspecto           | Decisão                 | Motivação Principal       |
+| ----------------- | ----------------------- | ------------------------- |
+| **IA**            | Google Gemini           | Custo-benefício           |
+| **Framework**     | Flask                   | Simplicidade              |
+| **Estrutura**     | Por responsabilidade    | Clean Architecture        |
+| **Config**        | .env                    | Segurança                 |
+| **Email**         | SMTP + Gmail            | Simplicidade              |
 | **Spam Logic**    | Sem resposta automática | Segurança + Boas práticas |
-| **Testes**        | pytest               | Flexibilidade       |
-| **Processamento** | Síncrono             | Simplicidade        |
-| **Webhook**       | Simples              | MVP                 |
-| **Logging**       | Básico               | Adequação           |
-| **Persistência**  | Stateless            | Simplicidade        |
-| **Segurança**     | Básica               | MVP                 |
-| **Monitoramento** | Logs                 | Custo zero          |
-| **Deploy**        | Simples              | Rapidez             |
+| **Testes**        | pytest                  | Flexibilidade             |
+| **Processamento** | Síncrono                | Simplicidade              |
+| **Webhook**       | Simples                 | MVP                       |
+| **Logging**       | Básico                  | Adequação                 |
+| **Persistência**  | Stateless               | Simplicidade              |
+| **Segurança**     | Básica                  | MVP                       |
+| **Monitoramento** | Logs                    | Custo zero                |
+| **Deploy**        | Simples                 | Rapidez                   |
 
 ---
 
