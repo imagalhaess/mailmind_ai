@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
-
-from app import create_app, main
-
-if __name__ == '__main__':
+"""
+Entry point for the Email Analyzer application.
+To run the application, execute:
+python -m app.app
+"""
+from app.app import main
+ 
+if __name__ == "__main__":
     main()

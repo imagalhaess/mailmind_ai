@@ -1,6 +1,6 @@
-# Email Analyzer - AutoU Case
+# MailMind - Sistema de Análise Inteligente de Emails
 
-Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classificar mensagens e sugerir respostas automáticas.
+Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classificar mensagens e automatizar respostas. Otimize seu tempo usando a IA da forma correta.
 
 ## 🚀 Funcionalidades
 
@@ -14,14 +14,14 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 
 - Python 3.10+
 - Chave de API do Google Gemini
-- Conta SendGrid (opcional, para envio de e-mails)
+- Conta SendGrid (opcional, para envio de e-mails/respostas automáticas)
 
 ## 🛠️ Instalação
 
 1. **Clone e configure o ambiente:**
 
    ```bash
-   git clone <seu-repositorio>
+   git clone <https://github.com/imagalhaess/email_analyzer.git>
    cd email_analyzer
    python3 -m venv .venv
    source .venv/bin/activate  # Linux/macOS
@@ -59,8 +59,8 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 ### Interface Web:
 
 ```bash
-python app.py
-# Acesse: http://localhost:8000
+python -m app.app
+# Acesse: http://localhost:8001
 ```
 
 ### CLI (exemplos):
@@ -72,7 +72,7 @@ python main.py
 ## 📁 Estrutura do Projeto
 
 ```
-email_analyzer/
+mailmind/
 ├── app.py                    # 🚀 Ponto de entrada principal
 ├── main.py                   # 📝 Exemplo CLI (demonstração)
 ├── requirements.txt          # 📦 Dependências Python
@@ -88,29 +88,45 @@ email_analyzer/
 │   ├── utils/               # 🛠️ Utilitários
 │   │   ├── text_preprocess.py # 📝 Pré-processamento NLP
 │   │   └── email_sender.py  # 📤 Envio de emails
-│   ├── templates/           # 🎨 Templates HTML
-│   │   ├── index.html       # 🏠 Página principal
-│   │   ├── result.html      # 📄 Resultado individual
-│   │   ├── batch_result.html # 📋 Resultado em lote
-│   │   └── webhook_test.html # 🧪 Teste do webhook
-│   └── tests/               # 🧪 Testes unitários
-│       └── test_email_analyzer.py
+│   └── static/              # 🎨 Interface web moderna
+│       ├── index.html       # 🏠 Página principal
+│       ├── css/style.css    # 🎨 Estilos modernos
+│       └── js/app.js         # ⚡ JavaScript interativo
+├── frontend/                # 🎨 Interface React (Lovable)
+│   ├── src/                 # 📁 Código React
+│   ├── package.json         # 📦 Dependências Node.js
+│   └── vite.config.ts       # ⚡ Configuração Vite
 └── docs/                    # 📚 Documentação completa
     ├── ARCHITECTURE.md       # 🏛️ Arquitetura do sistema
     ├── BUSINESS_RULES.md     # 📋 Regras de negócio
     ├── TECHNICAL_DECISIONS.md # 🔧 Decisões técnicas
     ├── DEVELOPMENT_GUIDE.md  # 👨‍💻 Guia de desenvolvimento
     ├── PROJECT_STATUS.md     # 📊 Status do projeto
-    ├── webhook_examples.md   # 🔗 Exemplos de webhook
+    ├── WEBHOOK_EXAMPLES.md   # 🔗 Exemplos de webhook
     └── SETUP_SENDGRID.md    # 📧 Setup SendGrid
 ```
 
 ## 🧪 Testes
 
+### Teste Rápido
+
 ```bash
-pip install pytest
-pytest app/tests/
+# Iniciar aplicação
+python app.py
+
+# Acessar interface
+# http://localhost:8001
 ```
+
+### Guia Completo de Testes
+
+Consulte **[Guia de Testes](docs/TESTING_GUIDE.md)** para instruções detalhadas sobre:
+
+- ✅ Como testar todas as funcionalidades
+- ✅ Use qualquer email real para receber as mensagens
+- ✅ Cenários de teste passo a passo
+- ✅ Verificação de problemas comuns
+- ✅ **Sistema de fallback**: SendGrid → Gmail SMTP → Simulação
 
 ## 🏗️ Arquitetura
 
@@ -162,14 +178,16 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 
 ## 📚 Documentação Completa
 
-- **[Status do Projeto](docs/PROJECT_STATUS.md)** - O que está funcionando e próximos passos
-- **[Arquitetura](docs/ARCHITECTURE.md)** - Decisões arquiteturais e estrutura do sistema
-- **[Regras de Negócio](docs/BUSINESS_RULES.md)** - Lógica de classificação e ações automáticas
-- **[Decisões Técnicas](docs/TECHNICAL_DECISIONS.md)** - Por que cada tecnologia foi escolhida
-- **[Guia de Desenvolvimento](docs/DEVELOPMENT_GUIDE.md)** - Como contribuir e desenvolver
-- **[Exemplos de Webhook](docs/webhook_examples.md)** - Guia completo de integração
-- **[Setup SendGrid](docs/SETUP_SENDGRID.md)** - Configuração de envio de e-mails
+- **[Guia de Testes](docs/TESTING_GUIDE.md)** - 🧪 Como testar todas as funcionalidades
+- **[Status do Projeto](docs/PROJECT_STATUS.md)** - 📊 O que está funcionando e próximos passos
+- **[Arquitetura](docs/ARCHITECTURE.md)** - 🏛️ Decisões arquiteturais e estrutura do sistema
+- **[Regras de Negócio](docs/BUSINESS_RULES.md)** - 📋 Lógica de classificação e ações automáticas
+- **[Decisões Técnicas](docs/TECHNICAL_DECISIONS.md)** - 🔧 Por que cada tecnologia foi escolhida
+- **[Guia de Desenvolvimento](docs/DEVELOPMENT_GUIDE.md)** - 👨‍💻 Como contribuir e desenvolver
+- **[Exemplos de Webhook](docs/WEBHOOK_EXAMPLES.md)** - 🔗 Guia completo de integração
+- **[Setup SendGrid](docs/SETUP_SENDGRID.md)** - 📧 Configuração de envio de e-mails
+- **[Setup SendGrid MailMind](docs/SETUP_SENDGRID_MAILMIND.md)** - 📧 Configuração específica para mailmindai25@gmail.com
 
 ## 📝 Licença
 
-Este projeto foi desenvolvido para o processo seletivo da AutoU.
+Este projeto foi desenvolvido por Isabela Mattos para o processo seletivo da AutoU.
