@@ -136,8 +136,12 @@ def analyze_batch_emails(emails: list, service, mailer, config) -> list:
             action_result = None
             
             if atencao.upper() == "NÃO" and sender:
-                # Resposta automática para spam/improdutivo
-                response_body = f"""Olá,
+                # Verifica se é spam - spam NÃO deve receber resposta automática
+                if categoria.lower() == "spam":
+                    action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+                else:
+                    # Resposta automática para outros tipos de improdutivos (felicitações, etc.)
+                    response_body = f"""Olá,
 
 Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
@@ -148,16 +152,16 @@ Esta é uma resposta automática gerada pelo nosso sistema de análise de emails
 Atenciosamente,
 Equipe MailMind
 MailMind System"""
-                
-                if mailer:
-                    mailer.send(
-                        to_address=sender,
-                        subject="Resposta automática - MailMind",
-                        body=response_body,
-                    )
-                    action_result = f"✅ Resposta automática ENVIADA para {sender}"
-                else:
-                    action_result = f"📧 [SIMULAÇÃO] Resposta seria enviada para {sender}"
+                    
+                    if mailer:
+                        mailer.send(
+                            to_address=sender,
+                            subject="Resposta automática - MailMind",
+                            body=response_body,
+                        )
+                        action_result = f"✅ Resposta automática ENVIADA para {sender}"
+                    else:
+                        action_result = f"📧 [SIMULAÇÃO] Resposta seria enviada para {sender}"
                     
             elif atencao.upper() == "SIM":
                 # Encaminhamento para curadoria
@@ -381,8 +385,12 @@ Subject: {subject}
                 action_result = None
                 
                 if atencao.upper() == "NÃO" and extracted_sender:
-                    # Resposta automática para spam/improdutivo
-                    response_body = f"""Olá,
+                    # Verifica se é spam - spam NÃO deve receber resposta automática
+                    if categoria.lower() == "spam":
+                        action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+                    else:
+                        # Resposta automática para outros tipos de improdutivos (felicitações, etc.)
+                        response_body = f"""Olá,
 
 Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
@@ -393,16 +401,16 @@ Esta é uma resposta automática gerada pelo nosso sistema de análise de emails
 Atenciosamente,
 Equipe MailMind
 MailMind System"""
-                    
-                    if mailer:
-                        mailer.send(
-                            to_address=extracted_sender,
-                            subject="Resposta automática - MailMind",
-                            body=response_body,
-                        )
-                        action_result = f"✅ Resposta automática ENVIADA para {extracted_sender}"
-                    else:
-                        action_result = f"📧 [SIMULAÇÃO] Resposta seria enviada para {extracted_sender}"
+                        
+                        if mailer:
+                            mailer.send(
+                                to_address=extracted_sender,
+                                subject="Resposta automática - MailMind",
+                                body=response_body,
+                            )
+                            action_result = f"✅ Resposta automática ENVIADA para {extracted_sender}"
+                        else:
+                            action_result = f"📧 [SIMULAÇÃO] Resposta seria enviada para {extracted_sender}"
                         
                 elif atencao.upper() == "SIM":
                     # Encaminhamento para curadoria
@@ -498,7 +506,11 @@ Este email foi automaticamente encaminhado pelo sistema MailMind via webhook."""
         sender_email = extracted_sender or data["expected_sender"]
         
         if atencao.upper() == "NÃO":
-            response_body = f"""Olá,
+            # Verifica se é spam - spam NÃO deve receber resposta automática
+            if categoria.lower() == "spam":
+                action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+            else:
+                response_body = f"""Olá,
 
 Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
@@ -509,16 +521,16 @@ Esta é uma resposta automática gerada pelo nosso sistema de análise de emails
 Atenciosamente,
 Equipe MailMind
 MailMind System"""
-            
-            if mailer:
-                mailer.send(
-                    to_address=sender_email,
-                    subject="Resposta automática - Email Analyzer",
-                    body=response_body,
-                )
-                action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
-            else:
-                action_result = f"📧 [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
+                
+                if mailer:
+                    mailer.send(
+                        to_address=sender_email,
+                        subject="Resposta automática - Email Analyzer",
+                        body=response_body,
+                    )
+                    action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
+                else:
+                    action_result = f"📧 [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
         elif atencao.upper() == "SIM":
             forward_body = f"""Email recebido para curadoria humana:
 
@@ -607,10 +619,15 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                 sender_email = extracted_sender or manual_sender
                 
                 if atencao.upper() == "NÃO":
-                    # Para emails IMPRODUTIVOS: responder automaticamente para o REMETENTE ORIGINAL
-                    if sender_email:
-                        # Conteúdo mais detalhado da resposta automática
-                        response_body = f"""Olá,
+                    # Verifica se é spam - spam NÃO deve receber resposta automática
+                    if categoria.lower() == "spam":
+                        action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+                        logging.info(f"Spam detectado - nenhuma resposta enviada para: {sender_email}")
+                    else:
+                        # Para outros emails IMPRODUTIVOS: responder automaticamente para o REMETENTE ORIGINAL
+                        if sender_email:
+                            # Conteúdo mais detalhado da resposta automática
+                            response_body = f"""Olá,
 
 Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
@@ -622,51 +639,51 @@ Atenciosamente,
 Equipe MailMind
 MailMind System"""
                         
-                        # Tentar enviar com fallback automático
-                        email_sent = False
-                        try:
-                            if mailer:
-                                mailer.send(
-                                    to_address=sender_email,
-                                    subject="Resposta automática - MailMind",
-                                    body=response_body,
-                                )
-                                action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
-                                logging.info(f"Email improdutivo detectado - resposta automática enviada para remetente: {sender_email}")
-                                email_sent = True
-                        except Exception as e:
-                            logging.warning(f"Falha no envio principal: {e}")
-                            # Tentar fallback Gmail SMTP
+                            # Tentar enviar com fallback automático
+                            email_sent = False
                             try:
-                                gmail_host = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
-                                gmail_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
-                                gmail_user = os.getenv("GMAIL_SMTP_USER", "")
-                                gmail_password = os.getenv("GMAIL_SMTP_PASSWORD", "")
-                                
-                                if gmail_user and gmail_password:
-                                    fallback_mailer = EmailSender(
-                                        host=gmail_host,
-                                        port=gmail_port,
-                                        username=gmail_user,
-                                        password=gmail_password,
-                                        default_from=noreply_address,
-                                    )
-                                    fallback_mailer.send(
+                                if mailer:
+                                    mailer.send(
                                         to_address=sender_email,
                                         subject="Resposta automática - MailMind",
                                         body=response_body,
                                     )
-                                    action_result = f"✅ Resposta automática ENVIADA via Gmail SMTP para o REMETENTE ({sender_email})"
-                                    logging.info(f"Email improdutivo detectado - resposta automática enviada via Gmail SMTP para remetente: {sender_email}")
+                                    action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
+                                    logging.info(f"Email improdutivo detectado - resposta automática enviada para remetente: {sender_email}")
                                     email_sent = True
-                            except Exception as fallback_error:
-                                logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
-                        
-                        if not email_sent:
-                            action_result = f"📧 [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
-                            logging.info(f"Email improdutivo detectado - modo simulação (SMTP não configurado)")
-                    else:
-                        action_result = f"❌ Email do remetente não identificado - não foi possível enviar resposta automática"
+                            except Exception as e:
+                                logging.warning(f"Falha no envio principal: {e}")
+                                # Tentar fallback Gmail SMTP
+                                try:
+                                    gmail_host = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
+                                    gmail_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
+                                    gmail_user = os.getenv("GMAIL_SMTP_USER", "")
+                                    gmail_password = os.getenv("GMAIL_SMTP_PASSWORD", "")
+                                    
+                                    if gmail_user and gmail_password:
+                                        fallback_mailer = EmailSender(
+                                            host=gmail_host,
+                                            port=gmail_port,
+                                            username=gmail_user,
+                                            password=gmail_password,
+                                            default_from=noreply_address,
+                                        )
+                                        fallback_mailer.send(
+                                            to_address=sender_email,
+                                            subject="Resposta automática - MailMind",
+                                            body=response_body,
+                                        )
+                                        action_result = f"✅ Resposta automática ENVIADA via Gmail SMTP para o REMETENTE ({sender_email})"
+                                        logging.info(f"Email improdutivo detectado - resposta automática enviada via Gmail SMTP para remetente: {sender_email}")
+                                        email_sent = True
+                                except Exception as fallback_error:
+                                    logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
+                            
+                            if not email_sent:
+                                action_result = f"📧 [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
+                                logging.info(f"Email improdutivo detectado - modo simulação (SMTP não configurado)")
+                        else:
+                            action_result = f"❌ Email do remetente não identificado - não foi possível enviar resposta automática"
                 elif atencao.upper() == "SIM":
                     # Para emails PRODUTIVOS: encaminhar para curadoria humana
                     if config.curator_address:

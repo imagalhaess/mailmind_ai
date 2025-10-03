@@ -425,6 +425,75 @@ tests/        # Testes unitários
 
 ---
 
+## 🚫 **Decisão: Lógica de Resposta Automática para Spam**
+
+### ✅ **Escolha**: Spam NÃO recebe resposta automática
+
+**Motivação**:
+
+- **Segurança**: Responder a spam confirma que o email chegou
+- **Anti-spam**: Resposta pode aumentar volume de spam futuro
+- **Boas práticas**: Padrão da indústria para tratamento de spam
+- **Eficiência**: Evita desperdício de recursos com spammers
+
+**Lógica Implementada**:
+
+```python
+if atencao.upper() == "NÃO":
+    if categoria.lower() == "spam":
+        action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+    else:
+        # Outros improdutivos (felicitações, etc.) recebem resposta
+        send_automatic_response()
+```
+
+**Categorias de Comportamento**:
+
+1. **Spam** (`categoria.lower() == "spam"`)
+   - ❌ **Nenhuma resposta automática**
+   - ✅ **Apenas sugestão de ação** (marcar como spam, bloquear, excluir)
+   - ✅ **Log de detecção** para monitoramento
+
+2. **Outros Improdutivos** (felicitações, mensagens genéricas)
+   - ✅ **Resposta automática educada**
+   - ✅ **Agradecimento e redirecionamento**
+   - ✅ **Instrução para não responder**
+
+3. **Produtivos** (propostas, parcerias, dúvidas)
+   - ✅ **Encaminhamento para curadoria humana**
+   - ✅ **Notificação para equipe**
+
+**Alternativas Consideradas**:
+
+- Resposta automática para todos os improdutivos: **Rejeitado** - Spam não deve receber resposta
+- Resposta genérica para spam: **Rejeitado** - Pode confirmar recebimento
+- Bloqueio automático: **Futuro** - Pode ser implementado depois
+
+**Implicações**:
+
+- ✅ **Segurança**: Não confirma recebimento de spam
+- ✅ **Eficiência**: Reduz volume de emails desnecessários
+- ✅ **Boas práticas**: Segue padrões da indústria
+- ✅ **Flexibilidade**: Outros improdutivos ainda recebem resposta educada
+- ⚠️ **Complexidade**: Lógica adicional de classificação
+- ⚠️ **Dependência**: Requer classificação precisa do Gemini
+
+**Implementação**:
+
+A lógica foi aplicada em todas as funções de processamento:
+- `analyze_batch_emails()` - Processamento em lote
+- Webhook `/webhook/email` - Processamento via webhook
+- Testes mock `/test/*` - Dados de teste
+- Análise principal `/analyze` - Interface principal
+
+**Validação**:
+
+- ✅ Spam retorna "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+- ✅ Felicitações retornam "✅ Resposta automática ENVIADA"
+- ✅ Propostas retornam "ENVIADO para CURADORIA HUMANA"
+
+---
+
 ## 🔮 **Decisões Futuras Planejadas**
 
 ### **Webhook Avançado**
@@ -471,6 +540,7 @@ tests/        # Testes unitários
 | **Estrutura**     | Por responsabilidade | Clean Architecture  |
 | **Config**        | .env                 | Segurança           |
 | **Email**         | SMTP + Gmail         | Simplicidade        |
+| **Spam Logic**    | Sem resposta automática | Segurança + Boas práticas |
 | **Testes**        | pytest               | Flexibilidade       |
 | **Processamento** | Síncrono             | Simplicidade        |
 | **Webhook**       | Simples              | MVP                 |
@@ -482,6 +552,6 @@ tests/        # Testes unitários
 
 ---
 
-**Última atualização**: 02/10/2025  
-**Versão**: 1.0.0  
+**Última atualização**: 03/10/2025  
+**Versão**: 1.1.0  
 **Status**: Documentação completa das decisões técnicas
