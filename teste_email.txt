@@ -1,0 +1,12 @@
+From: teste@exemplo.com
+Subject: Teste PDF
+
+Este é um email de teste em formato PDF para verificar se a funcionalidade está funcionando corretamente.
+
+Conteúdo do email:
+- Remetente: teste@exemplo.com
+- Assunto: Teste PDF
+- Mensagem: Teste de funcionalidade
+
+Atenciosamente,
+Equipe de Teste
