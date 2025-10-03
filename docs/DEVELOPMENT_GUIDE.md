@@ -67,8 +67,8 @@ email_analyzer/
 ├── BUSINESS_RULES.md         # 📋 Regras de negócio
 ├── TECHNICAL_DECISIONS.md    # 🔧 Decisões técnicas
 ├── DEVELOPMENT_GUIDE.md      # 👨‍💻 Este arquivo
-├── webhook_examples.md       # 🔗 Exemplos de webhook
-├── SETUP_SENDGRID.md         # 📧 Setup SendGrid
+├── LGPD_COMPLIANCE.md        # 🛡️ Conformidade LGPD
+├── DEPLOY_GUIDE.md           # 🚀 Guia de Deploy
 ├── providers/                # 🌐 Provedores externos
 │   └── gemini_client.py     # 🤖 Cliente Google Gemini
 ├── services/                 # 🧠 Lógica de negócio
@@ -76,13 +76,12 @@ email_analyzer/
 ├── utils/                    # 🛠️ Utilitários
 │   ├── text_preprocess.py   # 📝 Pré-processamento NLP
 │   └── email_sender.py      # 📤 Envio de emails
-├── templates/               # 🎨 Templates HTML
+├── static/                  # 🎨 Frontend HTML/CSS/JS
 │   ├── index.html           # 🏠 Página principal
-│   ├── result.html          # 📄 Resultado individual
-│   ├── batch_result.html    # 📋 Resultado em lote
-│   └── webhook_test.html    # 🧪 Teste do webhook
+│   ├── css/style.css        # 🎨 Estilos
+│   └── js/app.js            # ⚡ JavaScript
 └── tests/                   # 🧪 Testes unitários
-    └── test_email_analyzer.py
+    └── __init__.py
 ```
 
 ## 🔧 Desenvolvimento
@@ -218,7 +217,7 @@ def processar_email(email: str) -> dict:
 #### **Estrutura de Testes**
 
 ```python
-# tests/test_email_analyzer.py
+# app/tests/ (arquivos de teste disponíveis)
 import pytest
 from unittest.mock import Mock, patch
 from services.email_analyzer import EmailAnalyzerService
@@ -263,7 +262,7 @@ pytest
 pytest --cov=services --cov=providers --cov=utils
 
 # Executar teste específico
-pytest tests/test_email_analyzer.py::TestEmailAnalyzer::test_analyze_success
+pytest app/tests/  # Executar testes disponíveis
 ```
 
 ### **Logging**
