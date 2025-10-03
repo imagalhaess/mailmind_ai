@@ -241,6 +241,31 @@ O MailMind usa um sistema robusto de fallback para envio de emails:
 
 **Status atual**: Gmail SMTP está funcionando como fallback, garantindo que emails sempre sejam enviados.
 
+## 📬 Email de Curadoria
+
+**Email configurado**: `autocase_curador@tuamaeaquelaursa.com`
+
+### Como Acessar o Email de Curadoria:
+
+1. **Acesse**: https://tuamaeaquelaursa.com
+2. **Clique em**: "Acessar Email" ou "Email Login"
+3. **Digite o email**: `autocase_curador@tuamaeaquelaursa.com`
+4. **Digite a senha**: (fornecida separadamente)
+5. **Acesse a caixa de entrada** para ver emails encaminhados
+
+### O que Você Verá:
+
+- **Emails Produtivos**: Propostas comerciais, parcerias, dúvidas técnicas, etc.
+- **Assunto**: "Email recebido para curadoria humana"
+- **Conteúdo**: Detalhes completos do email original + análise da IA
+- **Remetente**: Sistema MailMind
+
+### Testando o Encaminhamento:
+
+1. Envie um email **produtivo** (proposta comercial, parceria, etc.)
+2. Verifique se aparece na caixa de entrada do `autocase_curador@tuamaeaquelaursa.com`
+3. Confirme que o conteúdo está completo e legível
+
 ## 🎯 Checklist de Testes Completos
 
 - [ ] ✅ Aplicação inicia sem erros
