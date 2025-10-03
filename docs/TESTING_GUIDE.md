@@ -172,11 +172,99 @@ python app.py
 
 **Objetivo**: Testar integração via API.
 
+#### **📋 Estrutura JSON Aceita**
+
+O webhook aceita **APENAS** a estrutura JSON simples abaixo. JSONs mais complexos não são interpretados:
+
+```json
+{
+  "sender": "email@exemplo.com",
+  "subject": "Assunto do Email",
+  "content": "Conteúdo do email aqui"
+}
+```
+
+**Campos obrigatórios**:
+
+- `sender`: Email do remetente (string)
+- `subject`: Assunto do email (string)
+- `content`: Conteúdo do email (string)
+
+**Campos opcionais**:
+
+- `email_content`: Alternativa ao campo `content` (para compatibilidade)
+
+#### **⚠️ Limitações Importantes**:
+
+- **JSON simples apenas**: Não aceita estruturas aninhadas complexas
+- **Campos específicos**: Apenas `sender`, `subject`, `content`/`email_content`
+- **Sem arrays**: Não aceita listas de emails
+- **Sem objetos aninhados**: Não aceita objetos dentro de objetos
+- **Sem metadados extras**: Campos como `timestamp`, `headers`, `attachments` são ignorados
+
+#### **❌ Exemplos de JSONs NÃO Aceitos**:
+
+```json
+// ❌ Muito complexo - objetos aninhados
+{
+  "email": {
+    "sender": "test@test.com",
+    "subject": "Test",
+    "content": "Test content"
+  },
+  "metadata": {
+    "timestamp": "2025-01-01",
+    "priority": "high"
+  }
+}
+
+// ❌ Array de emails
+[
+  {
+    "sender": "test1@test.com",
+    "subject": "Test 1",
+    "content": "Content 1"
+  },
+  {
+    "sender": "test2@test.com",
+    "subject": "Test 2",
+    "content": "Content 2"
+  }
+]
+
+// ❌ Campos extras não reconhecidos
+{
+  "sender": "test@test.com",
+  "subject": "Test",
+  "content": "Test content",
+  "attachments": ["file1.pdf"],
+  "headers": {"X-Priority": "1"}
+}
+```
+
+#### **✅ Exemplos de JSONs Aceitos**:
+
+```json
+// ✅ Estrutura básica
+{
+  "sender": "webhook@teste.com",
+  "subject": "Teste via webhook",
+  "content": "Este é um teste de integração via webhook."
+}
+
+// ✅ Usando email_content (alternativa)
+{
+  "sender": "test@exemplo.com",
+  "subject": "Teste alternativo",
+  "email_content": "Conteúdo usando campo alternativo."
+}
+```
+
 **Passos**:
 
 1. Na aba "Webhook":
-   - **Método**: Selecione "JSON"
-   - **Conteúdo**: Cole o JSON abaixo:
+   - **Clique em**: "Usar JSON de Teste" (carrega estrutura válida automaticamente)
+   - **Ou cole manualmente**:
      ```json
      {
        "sender": "webhook@teste.com",
@@ -184,12 +272,13 @@ python app.py
        "content": "Este é um teste de integração via webhook."
      }
      ```
-2. Clique em "Testar Webhook"
+2. Clique em "Enviar para Webhook"
 
 **Resultado Esperado**:
 
 - ✅ Status: "Sucesso"
 - ✅ Resposta: JSON com análise do email
+- ✅ Contagem correta de emails produtivos/improdutivos
 
 ## 🔍 Verificação de Problemas
 
@@ -248,10 +337,8 @@ O MailMind usa um sistema robusto de fallback para envio de emails:
 ### Como Acessar o Email de Curadoria:
 
 1. **Acesse**: https://tuamaeaquelaursa.com
-2. **Clique em**: "Acessar Email" ou "Email Login"
-3. **Digite o email**: `autocase_curador@tuamaeaquelaursa.com`
-4. **Digite a senha**: (fornecida separadamente)
-5. **Acesse a caixa de entrada** para ver emails encaminhados
+2. **Clique em**: "exemplo@tuamaeaquelaursa"
+3. **Digite o email**: `autocase_curador`
 
 ### O que Você Verá:
 
