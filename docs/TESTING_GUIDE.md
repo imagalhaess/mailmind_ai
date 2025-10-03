@@ -228,7 +228,8 @@ python app.py
 
 - ✅ Use seu próprio email para testar
 - ✅ Ou crie um email temporário para testes
-- ✅ Verifique a pasta de spam se não receber
+- ✅ **Verifique a pasta de spam se não receber** - emails automáticos podem ser classificados como spam
+- ✅ **Remova da pasta de spam** se necessário para testar o recebimento
 
 ### 🔄 Sistema de Fallback
 
