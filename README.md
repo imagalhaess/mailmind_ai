@@ -92,18 +92,12 @@ mailmind/
 │       ├── index.html       # 🏠 Página principal
 │       ├── css/style.css    # 🎨 Estilos modernos
 │       └── js/app.js         # ⚡ JavaScript interativo
-├── frontend/                # 🎨 Interface React (Lovable)
-│   ├── src/                 # 📁 Código React
-│   ├── package.json         # 📦 Dependências Node.js
-│   └── vite.config.ts       # ⚡ Configuração Vite
 └── docs/                    # 📚 Documentação completa
     ├── ARCHITECTURE.md       # 🏛️ Arquitetura do sistema
     ├── BUSINESS_RULES.md     # 📋 Regras de negócio
     ├── TECHNICAL_DECISIONS.md # 🔧 Decisões técnicas
     ├── DEVELOPMENT_GUIDE.md  # 👨‍💻 Guia de desenvolvimento
     ├── PROJECT_STATUS.md     # 📊 Status do projeto
-    ├── WEBHOOK_EXAMPLES.md   # 🔗 Exemplos de webhook
-    └── SETUP_SENDGRID.md    # 📧 Setup SendGrid
 ```
 
 ## 🧪 Testes
@@ -184,9 +178,6 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 - **[Regras de Negócio](docs/BUSINESS_RULES.md)** - 📋 Lógica de classificação e ações automáticas
 - **[Decisões Técnicas](docs/TECHNICAL_DECISIONS.md)** - 🔧 Por que cada tecnologia foi escolhida
 - **[Guia de Desenvolvimento](docs/DEVELOPMENT_GUIDE.md)** - 👨‍💻 Como contribuir e desenvolver
-- **[Exemplos de Webhook](docs/WEBHOOK_EXAMPLES.md)** - 🔗 Guia completo de integração
-- **[Setup SendGrid](docs/SETUP_SENDGRID.md)** - 📧 Configuração de envio de e-mails
-- **[Setup SendGrid MailMind](docs/SETUP_SENDGRID_MAILMIND.md)** - 📧 Configuração específica para mailmindai25@gmail.com
 
 ## 📝 Licença
 

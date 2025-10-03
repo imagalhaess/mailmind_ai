@@ -36,7 +36,7 @@
 - [x] **Análise em lote**: Múltiplos emails de um arquivo
 - [x] **Resultados visuais**: Interface moderna com feedback
 - [x] **Dados mock**: Testes com exemplos pré-definidos
-- [x] **Frontend React**: Interface Lovable integrada
+- [x] **Frontend HTML/CSS/JS**: Interface moderna integrada
 
 ### 🔗 **Webhook**
 
@@ -44,7 +44,6 @@
 - [x] **Suporte JSON/Form**: Múltiplos formatos de entrada
 - [x] **Processamento automático**: Análise e ações automáticas
 - [x] **Interface de teste**: `/webhook/test`
-- [x] **Documentação**: Exemplos de uso completos
 
 ### 🧪 **Testes e Qualidade**
 
