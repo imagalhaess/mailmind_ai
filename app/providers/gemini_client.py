@@ -29,6 +29,11 @@ class GeminiClient:
                 "max_output_tokens": max_output_tokens,
             },
         )
+        
+        # Verifica se a resposta é válida antes de acessar .text
+        if not response.candidates or not response.candidates[0].content.parts:
+            raise ValueError("Resposta inválida do Gemini: nenhum conteúdo retornado")
+        
         return response.text
 
 

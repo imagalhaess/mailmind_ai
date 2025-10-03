@@ -3,7 +3,7 @@ import os
 import json
 import logging
 from typing import Tuple
-from flask import Flask, request, render_template, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, jsonify
 from dotenv import load_dotenv
 from pdfminer.high_level import extract_text
 
@@ -16,9 +16,16 @@ from .utils.email_sender import EmailSender
 
 def read_text_from_upload() -> Tuple[str, str]:
     """
-    Lê o conteúdo do upload suportando .txt/.pdf e também o campo de texto.
+    Lê o conteúdo do upload suportando .txt/.pdf, campo de texto e JSON.
     Retorna (conteudo, origem) para logging.
     """
+    # Suporte a JSON (API)
+    if request.is_json:
+        data = request.get_json()
+        if data and "email_content" in data:
+            return data["email_content"], "json"
+    
+    # Suporte a formulário (interface web)
     if request.form.get("email_text"):
         return request.form["email_text"], "text"
 
@@ -132,20 +139,20 @@ def analyze_batch_emails(emails: list, service, mailer, config) -> list:
                 # Resposta automática para spam/improdutivo
                 response_body = f"""Olá,
 
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe.
+Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
 {sugestao}
 
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails.
+Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
 
 Atenciosamente,
-Equipe de Atendimento Automatizado
-Email Analyzer System"""
+Equipe MailMind
+MailMind System"""
                 
                 if mailer:
                     mailer.send(
                         to_address=sender,
-                        subject="Resposta automática - Email Analyzer",
+                        subject="Resposta automática - MailMind",
                         body=response_body,
                     )
                     action_result = f"✅ Resposta automática ENVIADA para {sender}"
@@ -165,7 +172,7 @@ SUGESTÃO/AÇÃO: {sugestao}
 --- CONTEÚDO ORIGINAL ---
 {email_content[:300]}...
 
-Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
+Este email foi automaticamente encaminhado pelo sistema MailMind."""
                 
                 if mailer:
                     mailer.send(
@@ -173,7 +180,7 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
                         subject=f"Encaminhamento para curadoria - {categoria} (Email {i}/{len(emails)})",
                         body=forward_body,
                     )
-                    action_result = f"✅ ENVIADO para CUADORIA HUMANA ({config.curator_address})"
+                    action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
                 else:
                     action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para curadoria"
             
@@ -252,24 +259,54 @@ def create_app() -> Flask:
     config = load_config()
     client = GeminiClient(api_key=config.gemini_api_key, model_name=config.model_name)
     service = EmailAnalyzerService(client=client)
-    # Usa Gmail SMTP diretamente (mais confiável)
-    gmail_host = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
-    gmail_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
-    gmail_user = os.getenv("GMAIL_SMTP_USER", "")
-    gmail_password = os.getenv("GMAIL_SMTP_PASSWORD", "")
+    # Sistema de fallback: SendGrid → Gmail SMTP → Simulação
+    mailer = None
     
-    if gmail_user and gmail_password:
-        mailer = EmailSender(
-            host=gmail_host,
-            port=gmail_port,
-            username=gmail_user,
-            password=gmail_password,
-            default_from=gmail_user,
-        )
-        logging.info("✅ Gmail SMTP configurado")
-    else:
-        mailer = None
-        logging.warning("❌ Gmail SMTP não configurado - modo simulação ativado")
+    # Tentativa 1: SendGrid SMTP
+    sendgrid_host = os.getenv("SMTP_HOST", "")
+    sendgrid_port = int(os.getenv("SMTP_PORT", "587"))
+    sendgrid_user = os.getenv("SMTP_USER", "")
+    sendgrid_password = os.getenv("SMTP_PASSWORD", "")
+    noreply_address = os.getenv("NOREPLY_ADDRESS", "")
+    
+    if all([sendgrid_host, sendgrid_port, sendgrid_user, sendgrid_password, noreply_address]):
+        try:
+            mailer = EmailSender(
+                host=sendgrid_host,
+                port=sendgrid_port,
+                username=sendgrid_user,
+                password=sendgrid_password,
+                default_from=noreply_address,
+            )
+            logging.info("✅ SendGrid SMTP configurado")
+        except Exception as e:
+            logging.warning(f"❌ SendGrid SMTP falhou: {e}")
+            mailer = None
+    
+    # Tentativa 2: Gmail SMTP (fallback)
+    if mailer is None:
+        gmail_host = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
+        gmail_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
+        gmail_user = os.getenv("GMAIL_SMTP_USER", "")
+        gmail_password = os.getenv("GMAIL_SMTP_PASSWORD", "")
+        
+        if gmail_user and gmail_password:
+            try:
+                mailer = EmailSender(
+                    host=gmail_host,
+                    port=gmail_port,
+                    username=gmail_user,
+                    password=gmail_password,
+                    default_from=gmail_user,
+                )
+                logging.info("✅ Gmail SMTP configurado (fallback)")
+            except Exception as e:
+                logging.warning(f"❌ Gmail SMTP falhou: {e}")
+                mailer = None
+    
+    # Modo simulação se ambos falharem
+    if mailer is None:
+        logging.warning("❌ Nenhum SMTP configurado - modo simulação ativado")
 
     # Configuração de logging
     logging.basicConfig(
@@ -283,7 +320,7 @@ def create_app() -> Flask:
 
     @app.route("/", methods=["GET"]) 
     def index():
-        return render_template("index.html")
+        return send_from_directory('static', 'index.html')
     
     @app.route("/webhook/email", methods=["POST"])
     def webhook_email():
@@ -292,7 +329,8 @@ def create_app() -> Flask:
             # Tenta receber dados JSON primeiro
             if request.is_json:
                 data = request.get_json()
-                email_content = data.get('email_content', '')
+                # Aceita tanto 'email_content' quanto 'content' para compatibilidade
+                email_content = data.get('email_content', data.get('content', ''))
                 sender = data.get('sender', '')
                 subject = data.get('subject', '')
                 
@@ -346,20 +384,20 @@ Subject: {subject}
                     # Resposta automática para spam/improdutivo
                     response_body = f"""Olá,
 
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe.
+Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
 {sugestao}
 
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails.
+Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
 
 Atenciosamente,
-Equipe de Atendimento Automatizado
-Email Analyzer System"""
+Equipe MailMind
+MailMind System"""
                     
                     if mailer:
                         mailer.send(
                             to_address=extracted_sender,
-                            subject="Resposta automática - Email Analyzer",
+                            subject="Resposta automática - MailMind",
                             body=response_body,
                         )
                         action_result = f"✅ Resposta automática ENVIADA para {extracted_sender}"
@@ -379,7 +417,7 @@ SUGESTÃO/AÇÃO: {sugestao}
 --- CONTEÚDO ORIGINAL ---
 {formatted_email[:500]}...
 
-Este email foi automaticamente encaminhado pelo sistema Email Analyzer via webhook."""
+Este email foi automaticamente encaminhado pelo sistema MailMind via webhook."""
                     
                     if mailer:
                         mailer.send(
@@ -387,7 +425,7 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer via webho
                             subject=f"Webhook - Encaminhamento para curadoria - {categoria}",
                             body=forward_body,
                         )
-                        action_result = f"✅ ENVIADO para CUADORIA HUMANA ({config.curator_address})"
+                        action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
                     else:
                         action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para curadoria"
                 
@@ -412,14 +450,24 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer via webho
     def webhook_test():
         """Página de teste para o webhook."""
         if request.method == "GET":
-            return render_template("webhook_test.html")
+            return send_from_directory('static', 'index.html')
         
-        # Teste via POST
-        test_data = {
-            "sender": request.form.get("sender", "teste@exemplo.com"),
-            "subject": request.form.get("subject", "Teste Webhook"),
-            "email_content": request.form.get("email_content", "Este é um email de teste para o webhook.")
-        }
+        # Teste via POST - pode ser formulário ou JSON
+        if request.is_json:
+            # JSON direto
+            data = request.get_json()
+            test_data = {
+                "sender": data.get("sender", "teste@exemplo.com"),
+                "subject": data.get("subject", "Teste Webhook"),
+                "email_content": data.get("email_content", "Este é um email de teste para o webhook.")
+            }
+        else:
+            # Formulário tradicional
+            test_data = {
+                "sender": request.form.get("sender", "teste@exemplo.com"),
+                "subject": request.form.get("subject", "Teste Webhook"),
+                "email_content": request.form.get("email_content", "Este é um email de teste para o webhook.")
+            }
         
         # Simula chamada do webhook
         response = webhook_email()
@@ -452,15 +500,15 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer via webho
         if atencao.upper() == "NÃO":
             response_body = f"""Olá,
 
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe.
+Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
 {sugestao}
 
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails.
+Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
 
 Atenciosamente,
-Equipe de Atendimento Automatizado
-Email Analyzer System"""
+Equipe MailMind
+MailMind System"""
             
             if mailer:
                 mailer.send(
@@ -483,7 +531,7 @@ SUGESTÃO/AÇÃO: {sugestao}
 --- CONTEÚDO ORIGINAL ---
 {data['content'][:500]}...
 
-Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
+Este email foi automaticamente encaminhado pelo sistema MailMind."""
             
             if mailer:
                 mailer.send(
@@ -491,30 +539,28 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
                     subject=f"Encaminhamento para curadoria - {categoria}",
                     body=forward_body,
                 )
-                action_result = f"✅ ENVIADO para CUADORIA HUMANA ({config.curator_address})"
+                action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
             else:
-                action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para CUADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
+                action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
         else:
             action_result = "❓ Categoria não identificada"
         
-        return render_template(
-            "result.html",
-            categoria=categoria,
-            atencao_humana=atencao,
-            resumo=resumo,
-            sugestao=sugestao,
-            action_result=action_result,
-            test_mode=True,
-            test_type=test_type,
-            sender_email=sender_email
-        )
+        return jsonify({
+            "categoria": categoria,
+            "atencao_humana": atencao,
+            "resumo": resumo,
+            "sugestao": sugestao,
+            "acao_executada": action_result,
+            "test_mode": True,
+            "test_type": test_type,
+            "sender_email": sender_email
+        })
 
     @app.route("/analyze", methods=["POST"]) 
     def analyze():
         raw_text, origin = read_text_from_upload()
         if not raw_text:
-            flash("Envie um arquivo .txt/.pdf ou cole o texto do e-mail.", "warning")
-            return redirect(url_for("index"))
+            return jsonify({"error": "Envie um arquivo .txt/.pdf ou cole o texto do e-mail."}), 400
 
         # Detecta se há múltiplos emails no arquivo
         emails = split_multiple_emails(raw_text)
@@ -524,12 +570,11 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
             logging.info(f"📁 Detectados {len(emails)} emails para análise em lote")
             results = analyze_batch_emails(emails, service, mailer, config)
             
-            return render_template(
-                "batch_result.html",
-                total_emails=len(emails),
-                results=results,
-                batch_mode=True
-            )
+            return jsonify({
+                "total_emails": len(emails),
+                "results": results,
+                "batch_mode": True
+            })
         else:
             # Análise individual - um email
             preprocessed = basic_preprocess(raw_text)
@@ -537,8 +582,7 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
             
             # Verifica se a análise foi bem-sucedida
             if not result or 'categoria' not in result:
-                flash("Erro na análise do email. Tente novamente.", "error")
-                return redirect(url_for("index"))
+                return jsonify({"error": "Erro na análise do email. Tente novamente."}), 500
             
             # result é dict; convertemos para exibição
             categoria = result.get("categoria", "N/A")
@@ -551,7 +595,13 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
             try:
                 # Extrai o remetente automaticamente do conteúdo do email
                 extracted_sender = extract_sender_from_email(raw_text)
-                manual_sender = request.form.get("reply_to", "")
+                
+                # Busca o remetente manual (formulário ou JSON)
+                if request.is_json:
+                    data = request.get_json()
+                    manual_sender = data.get("sender", "")
+                else:
+                    manual_sender = request.form.get("reply_to", "")
                 
                 # Usa o remetente extraído automaticamente ou o informado manualmente
                 sender_email = extracted_sender or manual_sender
@@ -562,26 +612,57 @@ Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
                         # Conteúdo mais detalhado da resposta automática
                         response_body = f"""Olá,
 
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe.
+Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
 
 {sugestao}
 
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails.
+Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
 
 Atenciosamente,
-Equipe de Atendimento Automatizado
-Email Analyzer System"""
+Equipe MailMind
+MailMind System"""
                         
-                        if mailer:
-                            # ENVIO REAL: Resposta automática vai para quem enviou o email
-                            mailer.send(
-                                to_address=sender_email,
-                                subject="Resposta automática - Email Analyzer",
-                                body=response_body,
-                            )
-                            action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
-                            logging.info(f"Email improdutivo detectado - resposta automática enviada para remetente: {sender_email}")
-                        else:
+                        # Tentar enviar com fallback automático
+                        email_sent = False
+                        try:
+                            if mailer:
+                                mailer.send(
+                                    to_address=sender_email,
+                                    subject="Resposta automática - MailMind",
+                                    body=response_body,
+                                )
+                                action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
+                                logging.info(f"Email improdutivo detectado - resposta automática enviada para remetente: {sender_email}")
+                                email_sent = True
+                        except Exception as e:
+                            logging.warning(f"Falha no envio principal: {e}")
+                            # Tentar fallback Gmail SMTP
+                            try:
+                                gmail_host = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
+                                gmail_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
+                                gmail_user = os.getenv("GMAIL_SMTP_USER", "")
+                                gmail_password = os.getenv("GMAIL_SMTP_PASSWORD", "")
+                                
+                                if gmail_user and gmail_password:
+                                    fallback_mailer = EmailSender(
+                                        host=gmail_host,
+                                        port=gmail_port,
+                                        username=gmail_user,
+                                        password=gmail_password,
+                                        default_from=noreply_address,
+                                    )
+                                    fallback_mailer.send(
+                                        to_address=sender_email,
+                                        subject="Resposta automática - MailMind",
+                                        body=response_body,
+                                    )
+                                    action_result = f"✅ Resposta automática ENVIADA via Gmail SMTP para o REMETENTE ({sender_email})"
+                                    logging.info(f"Email improdutivo detectado - resposta automática enviada via Gmail SMTP para remetente: {sender_email}")
+                                    email_sent = True
+                            except Exception as fallback_error:
+                                logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
+                        
+                        if not email_sent:
                             action_result = f"📧 [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
                             logging.info(f"Email improdutivo detectado - modo simulação (SMTP não configurado)")
                     else:
@@ -601,33 +682,95 @@ SUGESTÃO/AÇÃO: {sugestao}
 --- CONTEÚDO ORIGINAL ---
 {raw_text[:500]}...
 
-Este email foi automaticamente encaminhado pelo sistema Email Analyzer."""
+Este email foi automaticamente encaminhado pelo sistema MailMind."""
                         
-                        if mailer:
-                            # ENVIO REAL: Encaminhamento para curadoria
-                            mailer.send(
-                                to_address=config.curator_address,
-                                subject=f"Encaminhamento para curadoria - {categoria}",
-                                body=forward_body,
-                            )
-                            action_result = f"✅ ENVIADO para CUADORIA HUMANA ({config.curator_address})"
-                            logging.info(f"Email produtivo detectado - encaminhado para curadoria: {config.curator_address}")
-                        else:
-                            action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para CUADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
+                        # Tentar enviar com fallback automático
+                        email_sent = False
+                        try:
+                            if mailer:
+                                mailer.send(
+                                    to_address=config.curator_address,
+                                    subject=f"Encaminhamento para curadoria - {categoria}",
+                                    body=forward_body,
+                                )
+                                action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
+                                logging.info(f"Email produtivo detectado - encaminhado para curadoria: {config.curator_address}")
+                                email_sent = True
+                        except Exception as e:
+                            logging.warning(f"Falha no envio principal: {e}")
+                            # Tentar fallback Gmail SMTP
+                            try:
+                                gmail_host = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
+                                gmail_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
+                                gmail_user = os.getenv("GMAIL_SMTP_USER", "")
+                                gmail_password = os.getenv("GMAIL_SMTP_PASSWORD", "")
+                                
+                                if gmail_user and gmail_password:
+                                    fallback_mailer = EmailSender(
+                                        host=gmail_host,
+                                        port=gmail_port,
+                                        username=gmail_user,
+                                        password=gmail_password,
+                                        default_from=noreply_address,
+                                    )
+                                    fallback_mailer.send(
+                                        to_address=config.curator_address,
+                                        subject=f"Encaminhamento para curadoria - {categoria}",
+                                        body=forward_body,
+                                    )
+                                    action_result = f"✅ ENVIADO via Gmail SMTP para CURADORIA HUMANA ({config.curator_address})"
+                                    logging.info(f"Email produtivo detectado - encaminhado via Gmail SMTP para curadoria: {config.curator_address}")
+                                    email_sent = True
+                            except Exception as fallback_error:
+                                logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
+                        
+                        if not email_sent:
+                            action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
                             logging.info(f"Email produtivo detectado - modo simulação (SMTP não configurado)")
             except Exception as e:
                 action_result = f"❌ Falha ao enviar e-mail: {e}"
                 logging.error(f"Erro no envio de email: {e}")
 
-            return render_template(
-                "result.html",
-                categoria=categoria,
-                atencao_humana=atencao,
-                resumo=resumo,
-                sugestao=sugestao,
-                origem=origin,
-                action_result=action_result,
-            )
+            return jsonify({
+                "categoria": categoria,
+                "atencao_humana": atencao,
+                "resumo": resumo,
+                "sugestao": sugestao,
+                "origem": origin,
+                "acao_executada": action_result,
+            })
+
+    @app.route('/health')
+    def health():
+        """Endpoint de health check para monitoramento"""
+        return jsonify({
+            'status': 'healthy',
+            'message': 'MailMind está funcionando corretamente',
+            'version': '1.0.0'
+        })
+
+    # Rotas para servir arquivos estáticos do React
+    @app.route('/static/<path:filename>')
+    def serve_static(filename):
+        """Serve arquivos estáticos do React"""
+        return send_from_directory('static', filename)
+
+    @app.route('/assets/<path:filename>')
+    def serve_assets(filename):
+        """Serve assets do React (JS, CSS)"""
+        return send_from_directory('static/assets', filename)
+
+    # Rota catch-all para SPA (Single Page Application) - deve ser a última rota
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_react_app(path):
+        """Serve a aplicação React para todas as rotas não-API"""
+        # Se for uma rota de API, não servir o React
+        if path.startswith('api/') or path.startswith('webhook/') or path.startswith('test/') or path.startswith('analyze') or path.startswith('health') or path.startswith('static/'):
+            return jsonify({'error': 'Not found'}), 404
+        
+        # Serve o index.html do React
+        return send_from_directory('static', 'index.html')
 
     return app
 
@@ -636,7 +779,7 @@ def main():
     """Função principal para executar a aplicação."""
     app = create_app()
     port = int(os.getenv("PORT", 8001))
-    print(f"🚀 Iniciando Email Analyzer em http://localhost:{port}")
+    print(f"🚀 Iniciando MailMind em http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
 
 
