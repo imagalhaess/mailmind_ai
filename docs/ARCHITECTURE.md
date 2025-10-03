@@ -24,9 +24,45 @@ O **Email Analyzer** é um sistema inteligente de análise e curadoria de emails
                                 │
                                 ▼
                        ┌─────────────────┐
-                       │   SMTP/Gmail    │
-                       │   (Email Sender)│
+                       │   Email Sender   │
+                       │   (Fallback)     │
                        └─────────────────┘
+                                │
+                    ┌───────────┴───────────┐
+                    ▼                       ▼
+            ┌─────────────┐         ┌─────────────┐
+            │   SendGrid   │         │ Gmail SMTP  │
+            │   (Primary)  │         │ (Fallback)  │
+            └─────────────┘         └─────────────┘
+```
+
+## 📧 Sistema de Fallback de Email
+
+O sistema implementa uma estratégia robusta de fallback para garantir que emails sempre sejam enviados:
+
+### **Estratégia de Fallback**:
+
+1. **SendGrid SMTP** (Primário)
+   - Provedor profissional
+   - Boa reputação de entrega
+   - Limite gratuito de 100 emails/dia
+2. **Gmail SMTP** (Fallback)
+   - Configuração simples
+   - Boa compatibilidade
+   - Confiável como backup
+3. **Modo Simulação** (Último recurso)
+   - Logs detalhados
+   - Sistema continua funcionando
+   - Fácil debugging
+
+### **Fluxo de Decisão**:
+
+```
+Tentar SendGrid → Sucesso? → Usar SendGrid
+     ↓ Falha
+Tentar Gmail → Sucesso? → Usar Gmail
+     ↓ Falha
+Modo Simulação → Log + Continuar
 ```
 
 ## 📁 Estrutura de Diretórios

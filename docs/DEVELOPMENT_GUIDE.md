@@ -1,4 +1,4 @@
-# 👨‍💻 Guia de Desenvolvimento - Email Analyzer
+# 👨‍💻 Guia de Desenvolvimento - MailMind
 
 ## 🚀 Início Rápido
 
@@ -7,7 +7,7 @@
 ```bash
 # Clone o repositório
 git clone <repository-url>
-cd email_analyzer
+cd mailmind
 
 # Crie e ative o ambiente virtual
 python -m venv .venv
@@ -30,6 +30,7 @@ nano .env
 ```
 
 **Variáveis obrigatórias**:
+
 ```env
 GEMINI_API_KEY=sua_chave_gemini_aqui
 GEMINI_MODEL=gemini-2.5-flash
@@ -89,12 +90,14 @@ email_analyzer/
 ### **Convenções de Código**
 
 #### **Python**
+
 - **PEP 8**: Seguir padrões de estilo Python
 - **Type Hints**: Usar onde possível
 - **Docstrings**: Documentar funções públicas
 - **Imports**: Organizar (stdlib, third-party, local)
 
 #### **Nomenclatura**
+
 ```python
 # Classes: PascalCase
 class EmailAnalyzerService:
@@ -112,27 +115,28 @@ email_content = "conteúdo do email"
 ```
 
 #### **Estrutura de Funções**
+
 ```python
 def exemplo_funcao(parametro: str) -> dict:
     """
     Descrição clara do que a função faz.
-    
+
     Args:
         parametro: Descrição do parâmetro
-        
+
     Returns:
         dict: Descrição do retorno
-        
+
     Raises:
         ValueError: Quando o parâmetro é inválido
     """
     # Validação de entrada
     if not parametro:
         raise ValueError("Parâmetro não pode ser vazio")
-    
+
     # Lógica principal
     resultado = processar_parametro(parametro)
-    
+
     # Retorno
     return resultado
 ```
@@ -140,19 +144,20 @@ def exemplo_funcao(parametro: str) -> dict:
 ### **Padrões de Arquitetura**
 
 #### **1. Separation of Concerns**
+
 ```python
 # ❌ Ruim: Tudo misturado
 def processar_email(email):
     # Validação
     if not email:
         return None
-    
+
     # Chamada da API
     response = requests.post("https://api.gemini.com", data=email)
-    
+
     # Envio de email
     smtp.send("resposta@empresa.com", "Resposta automática")
-    
+
     # Log
     print(f"Email processado: {email}")
 
@@ -160,7 +165,7 @@ def processar_email(email):
 class EmailAnalyzerService:
     def __init__(self, gemini_client: GeminiClient):
         self.gemini_client = gemini_client
-    
+
     def analyze(self, email_content: str) -> dict:
         return self.gemini_client.generate_content(email_content)
 
@@ -171,6 +176,7 @@ class EmailSender:
 ```
 
 #### **2. Dependency Injection**
+
 ```python
 # ❌ Ruim: Dependência hardcoded
 class EmailAnalyzerService:
@@ -184,6 +190,7 @@ class EmailAnalyzerService:
 ```
 
 #### **3. Error Handling**
+
 ```python
 # ❌ Ruim: Erro silencioso
 def processar_email(email):
@@ -209,6 +216,7 @@ def processar_email(email: str) -> dict:
 ### **Testes**
 
 #### **Estrutura de Testes**
+
 ```python
 # tests/test_email_analyzer.py
 import pytest
@@ -220,32 +228,33 @@ class TestEmailAnalyzer:
         """Setup para cada teste."""
         self.mock_gemini = Mock()
         self.service = EmailAnalyzerService(self.mock_gemini)
-    
+
     def test_analyze_success(self):
         """Testa análise bem-sucedida."""
         # Arrange
         email_content = "Email de teste"
         expected_result = {"categoria": "Spam", "atencao_humana": "NÃO"}
         self.mock_gemini.generate_content.return_value = expected_result
-        
+
         # Act
         result = self.service.analyze(email_content)
-        
+
         # Assert
         assert result == expected_result
         self.mock_gemini.generate_content.assert_called_once_with(email_content)
-    
+
     def test_analyze_api_error(self):
         """Testa erro na API."""
         # Arrange
         self.mock_gemini.generate_content.side_effect = Exception("API Error")
-        
+
         # Act & Assert
         with pytest.raises(Exception):
             self.service.analyze("test")
 ```
 
 #### **Executando Testes**
+
 ```bash
 # Executar todos os testes
 pytest
@@ -260,6 +269,7 @@ pytest tests/test_email_analyzer.py::TestEmailAnalyzer::test_analyze_success
 ### **Logging**
 
 #### **Configuração de Logs**
+
 ```python
 import logging
 
@@ -278,7 +288,7 @@ logger = logging.getLogger(__name__)
 # Uso nos serviços
 def processar_email(email: str):
     logger.info(f"Processando email de: {email[:50]}...")
-    
+
     try:
         resultado = analisar(email)
         logger.info(f"Email processado com sucesso: {resultado['categoria']}")
@@ -360,6 +370,7 @@ git commit -m "refactor: melhora arquitetura do serviço de análise"
 ### **Tipos de Testes**
 
 #### **1. Testes Unitários**
+
 ```python
 # Testa uma função/método isoladamente
 def test_extract_sender():
@@ -369,6 +380,7 @@ def test_extract_sender():
 ```
 
 #### **2. Testes de Integração**
+
 ```python
 # Testa integração entre componentes
 def test_webhook_integration():
@@ -381,6 +393,7 @@ def test_webhook_integration():
 ```
 
 #### **3. Testes de Aceitação**
+
 ```python
 # Testa fluxo completo do usuário
 def test_email_analysis_flow():
@@ -394,6 +407,7 @@ def test_email_analysis_flow():
 ### **Ferramentas de Qualidade**
 
 #### **Linting**
+
 ```bash
 # Instalar
 pip install flake8 black isort
@@ -405,6 +419,7 @@ isort .                     # Organizar imports
 ```
 
 #### **Type Checking**
+
 ```bash
 # Instalar
 pip install mypy
@@ -414,6 +429,7 @@ mypy .                      # Verificar tipos
 ```
 
 #### **Security**
+
 ```bash
 # Instalar
 pip install bandit safety
@@ -426,11 +442,13 @@ safety check               # Verificar dependências
 ## 🚀 Deploy
 
 ### **Desenvolvimento**
+
 ```bash
 python app.py
 ```
 
 ### **Produção**
+
 ```bash
 # Com Gunicorn
 pip install gunicorn
@@ -444,6 +462,7 @@ docker run -p 8000:8000 email-analyzer
 ### **Variáveis de Ambiente**
 
 #### **Desenvolvimento**
+
 ```env
 FLASK_ENV=development
 FLASK_DEBUG=True
@@ -451,6 +470,7 @@ LOG_LEVEL=DEBUG
 ```
 
 #### **Produção**
+
 ```env
 FLASK_ENV=production
 FLASK_DEBUG=False
@@ -460,16 +480,19 @@ LOG_LEVEL=INFO
 ## 📚 Recursos Úteis
 
 ### **Documentação**
+
 - [Flask Documentation](https://flask.palletsprojects.com/)
 - [Google Gemini API](https://ai.google.dev/)
 - [pytest Documentation](https://docs.pytest.org/)
 
 ### **Ferramentas**
+
 - [Postman](https://www.postman.com/) - Testar APIs
 - [Insomnia](https://insomnia.rest/) - Alternativa ao Postman
 - [VS Code](https://code.visualstudio.com/) - Editor recomendado
 
 ### **Extensões VS Code**
+
 - Python
 - Python Docstring Generator
 - GitLens
@@ -480,6 +503,7 @@ LOG_LEVEL=INFO
 ### **Problemas Comuns**
 
 #### **1. Erro de Import**
+
 ```bash
 # Problema: ModuleNotFoundError
 # Solução: Verificar PYTHONPATH
@@ -487,12 +511,14 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 ```
 
 #### **2. Erro de Gemini API**
+
 ```bash
 # Problema: 401 Unauthorized
 # Solução: Verificar GEMINI_API_KEY no .env
 ```
 
 #### **3. Erro de SMTP**
+
 ```bash
 # Problema: Connection refused
 # Solução: Verificar credenciais SMTP
@@ -500,6 +526,7 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 ```
 
 #### **4. Porta em Uso**
+
 ```bash
 # Problema: Address already in use
 # Solução: Mudar porta ou matar processo
