@@ -2,6 +2,7 @@
 class EmailAnalyzer {
   constructor() {
     this.currentTab = "analyze";
+    this.selectedFile = null; // Armazena o arquivo selecionado
     this.init();
   }
 
@@ -49,6 +50,11 @@ class EmailAnalyzer {
       this.handleWebhook();
     });
 
+    // Webhook test button
+    document.getElementById("webhookTestBtn").addEventListener("click", () => {
+      this.loadTestWebhookData();
+    });
+
     // Test tab buttons
     document
       .getElementById("testImprodutivoBtn")
@@ -67,6 +73,7 @@ class EmailAnalyzer {
     const fileUpload = document.getElementById("fileUpload");
     const fileInput = document.getElementById("fileInput");
     const fileInfo = document.getElementById("fileInfo");
+    const selectFileBtn = document.getElementById("selectFileBtn");
 
     // Drag and drop
     fileUpload.addEventListener("dragover", (e) => {
@@ -95,8 +102,21 @@ class EmailAnalyzer {
       }
     });
 
-    // Click to select file
-    fileUpload.addEventListener("click", () => {
+    // Click to select file - apenas na área de drop, não no botão
+    fileUpload.addEventListener("click", (e) => {
+      // Evita conflito com o botão
+      if (
+        e.target === fileUpload ||
+        e.target.classList.contains("file-text") ||
+        e.target.classList.contains("file-hint")
+      ) {
+        fileInput.click();
+      }
+    });
+
+    // Botão separado para seleção
+    selectFileBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // Evita propagação para o fileUpload
       fileInput.click();
     });
   }
@@ -143,6 +163,9 @@ class EmailAnalyzer {
       return;
     }
 
+    // Armazena o arquivo selecionado para uso posterior
+    this.selectedFile = file;
+
     const fileInfo = document.getElementById("fileInfo");
     fileInfo.innerHTML = `Arquivo selecionado: <strong>${file.name}</strong>`;
     fileInfo.style.display = "block";
@@ -156,7 +179,6 @@ class EmailAnalyzer {
     ).value;
     const emailContent = document.getElementById("emailContent").value.trim();
     const senderEmail = document.getElementById("senderEmail").value.trim();
-    const fileInput = document.getElementById("fileInput");
 
     // Validation
     if (inputType === "text" && !emailContent) {
@@ -164,7 +186,7 @@ class EmailAnalyzer {
       return;
     }
 
-    if (inputType === "file" && !fileInput.files[0]) {
+    if (inputType === "file" && !this.selectedFile) {
       this.showToast("Por favor, selecione um arquivo", "error");
       return;
     }
@@ -178,7 +200,7 @@ class EmailAnalyzer {
       let result;
 
       if (inputType === "file") {
-        result = await this.uploadFile(fileInput.files[0]);
+        result = await this.uploadFile(this.selectedFile);
       } else {
         result = await this.analyzeText(emailContent, senderEmail);
       }
@@ -187,7 +209,7 @@ class EmailAnalyzer {
       this.showToast("Email analisado com sucesso!", "success");
     } catch (error) {
       console.error("Erro na análise:", error);
-      this.showToast("Erro ao analisar email. Tente novamente.", "error");
+      this.showToast(`Erro ao analisar email: ${error.message}`, "error");
     } finally {
       this.setLoading(analyzeBtn, analyzeText, "Analisar Email", false);
     }
@@ -213,6 +235,18 @@ class EmailAnalyzer {
     }
   }
 
+  loadTestWebhookData() {
+    const testData = {
+      sender: "teste@exemplo.com",
+      subject: "Teste de Webhook",
+      content: "Este é um email de teste enviado via webhook.",
+    };
+
+    const webhookData = document.getElementById("webhookData");
+    webhookData.value = JSON.stringify(testData, null, 2);
+    this.showToast("JSON de teste carregado!", "success");
+  }
+
   async handleWebhook() {
     const webhookData = document.getElementById("webhookData").value.trim();
     const webhookBtn = document.getElementById("webhookBtn");
@@ -226,16 +260,26 @@ class EmailAnalyzer {
     this.setLoading(webhookBtn, webhookText, "Enviando...");
 
     try {
+      // Debug: mostrar o JSON que está sendo enviado
+      console.log("JSON sendo enviado:", webhookData);
+
       const data = JSON.parse(webhookData);
+      console.log("JSON parseado:", data);
+
       const result = await this.testWebhook(data);
       this.showResult(result);
       this.showToast("Dados enviados para webhook com sucesso!", "success");
     } catch (error) {
       console.error("Erro no webhook:", error);
+      console.error("JSON problemático:", webhookData);
+
       if (error instanceof SyntaxError) {
-        this.showToast("JSON inválido. Verifique a sintaxe.", "error");
+        this.showToast(`JSON inválido: ${error.message}`, "error");
       } else {
-        this.showToast("Erro ao enviar dados para webhook.", "error");
+        this.showToast(
+          `Erro ao enviar dados para webhook: ${error.message}`,
+          "error"
+        );
       }
     } finally {
       this.setLoading(webhookBtn, webhookText, "Enviar para Webhook", false);
@@ -263,7 +307,7 @@ class EmailAnalyzer {
 
   async uploadFile(file) {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("email_file", file); // Corrigido: usar 'email_file' como esperado pelo backend
 
     const response = await fetch("/analyze", {
       method: "POST",
@@ -271,7 +315,10 @@ class EmailAnalyzer {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`
+      );
     }
 
     return await response.json();
@@ -299,7 +346,10 @@ class EmailAnalyzer {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`
+      );
     }
 
     return await response.json();
@@ -309,8 +359,12 @@ class EmailAnalyzer {
     const resultsSection = document.getElementById("results");
     const resultContent = document.getElementById("resultContent");
 
+    // Handle webhook result (tem estrutura diferente)
+    if (result.result && result.result.categoria) {
+      resultContent.innerHTML = this.formatSingleResult(result.result);
+    }
     // Handle single result (API retorna 'categoria' e 'atencao_humana')
-    if (result.categoria || result.atencao_humana) {
+    else if (result.categoria || result.atencao_humana) {
       resultContent.innerHTML = this.formatSingleResult(result);
     }
     // Handle batch results
@@ -323,6 +377,19 @@ class EmailAnalyzer {
                 <div class="result-item">
                     <div class="result-status destructive">Erro</div>
                     <div class="result-summary">${result.error}</div>
+                </div>
+            `;
+    }
+    // Handle other cases
+    else {
+      resultContent.innerHTML = `
+                <div class="result-item">
+                    <div class="result-status">Resultado</div>
+                    <div class="result-summary">${JSON.stringify(
+                      result,
+                      null,
+                      2
+                    )}</div>
                 </div>
             `;
     }
@@ -359,26 +426,24 @@ class EmailAnalyzer {
   }
 
   formatBatchResults(result) {
+    // Conta emails produtivos (SIM) e improdutivos (NÃO)
+    const produtivos = result.results.filter(
+      (r) => r.atencao_humana === "SIM"
+    ).length;
+    const improdutivos = result.results.filter(
+      (r) => r.atencao_humana === "NÃO"
+    ).length;
+
     let html = `
             <div class="result-item">
                 <div class="result-summary">
-                    <strong>Total de emails processados:</strong> ${
-                      result.results.length
-                    }
+                    <strong>Total de emails processados:</strong> ${result.results.length}
                 </div>
                 <div class="result-actions">
-                    <strong>Emails produtivos:</strong> ${
-                      result.results.filter(
-                        (r) => r.classification === "produtivo"
-                      ).length
-                    }
+                    <strong>Emails produtivos:</strong> ${produtivos}
                 </div>
                 <div class="result-actions">
-                    <strong>Emails improdutivos:</strong> ${
-                      result.results.filter(
-                        (r) => r.classification === "improdutivo"
-                      ).length
-                    }
+                    <strong>Emails improdutivos:</strong> ${improdutivos}
                 </div>
             </div>
         `;

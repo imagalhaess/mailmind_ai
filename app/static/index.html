@@ -276,7 +276,7 @@
                     <button
                       type="button"
                       class="btn btn-outline"
-                      onclick="document.getElementById('fileInput').click()"
+                      id="selectFileBtn"
                     >
                       Selecionar Arquivo
                     </button>
@@ -432,6 +432,25 @@
                       <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                     </svg>
                     <span id="webhookText">Enviar para Webhook</span>
+                  </button>
+                  <button
+                    id="webhookTestBtn"
+                    class="btn btn-outline btn-full"
+                    style="margin-top: 10px"
+                  >
+                    <svg
+                      class="btn-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M9 12l2 2 4-4" />
+                      <path
+                        d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.5 0 2.9.37 4.13 1.02"
+                      />
+                    </svg>
+                    <span>Usar JSON de Teste</span>
                   </button>
                 </div>
               </div>
