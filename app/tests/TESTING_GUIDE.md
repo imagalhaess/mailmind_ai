@@ -125,6 +125,7 @@ python app.py
 **Objetivo**: Testar análise de emails via upload de arquivo (.txt ou .pdf).
 
 **Arquivos de teste disponíveis**:
+
 - `app/tests/teste_email.txt` - Email simples
 - `app/tests/teste_email.pdf` - Email em PDF
 - `app/tests/email_teste.pdf` - Múltiplos emails em PDF
