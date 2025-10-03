@@ -71,8 +71,12 @@ def generate_automatic_response(sugestao, categoria, email_content):
     """Gera uma resposta automática personalizada usando IA"""
     try:
         from .services.email_analyzer import EmailAnalyzerService
+        from .providers.gemini_client import GeminiClient
+        from .config import load_config
         
-        analyzer = EmailAnalyzerService()
+        config = load_config()
+        client = GeminiClient(api_key=config.gemini_api_key, model_name=config.model_name)
+        analyzer = EmailAnalyzerService(client=client)
         
         # Prompt melhorado para gerar resposta automática
         prompt = f"""
@@ -115,7 +119,7 @@ def generate_automatic_response(sugestao, categoria, email_content):
         print(f"DEBUG: Gerando resposta automática para categoria: {categoria}")
         print(f"DEBUG: Sugestão: {sugestao}")
         
-        response = analyzer.client.generate_content(prompt)
+        response = client.generate_content(prompt)
         
         logging.info(f"Tipo da resposta: {type(response)}")
         logging.info(f"Resposta: {response}")
