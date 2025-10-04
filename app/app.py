@@ -100,7 +100,7 @@ def extract_sender_from_email(email_content: str) -> str:
     return ""
 
 
-def generate_automatic_response(sugestao, categoria, email_content):
+def generate_automatic_response(sugestao, categoria, email_content, sender_email=""):
     """Gera uma resposta automática personalizada usando IA"""
     try:
         from .services.email_analyzer import EmailAnalyzerService
@@ -109,7 +109,12 @@ def generate_automatic_response(sugestao, categoria, email_content):
         
         config = load_config()
         client = GeminiClient(api_key=config.gemini_api_key, model_name=config.model_name)
-        analyzer = EmailAnalyzerService(client=client)
+        
+        # Extrai o nome do sender do email se disponível
+        sender_name = ""
+        if sender_email:
+            # Tenta extrair nome do email (parte antes do @)
+            sender_name = sender_email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
         
         # Prompt melhorado para gerar resposta automática
         prompt = f"""
@@ -148,57 +153,62 @@ def generate_automatic_response(sugestao, categoria, email_content):
         logging.info(f"Gerando resposta automática para categoria: {categoria}")
         logging.info(f"Sugestão: {sugestao}")
         
-        # Debug: print direto para ver se a função está sendo executada
         print(f"DEBUG: Gerando resposta automática para categoria: {categoria}")
         print(f"DEBUG: Sugestão: {sugestao}")
         
         response = client.generate_content(prompt)
         
         logging.info(f"Tipo da resposta: {type(response)}")
-        logging.info(f"Resposta: {response}")
         print(f"DEBUG: Tipo da resposta: {type(response)}")
-        print(f"DEBUG: Resposta: {response}")
         
+        # Verifica diferentes estruturas de resposta
         if response and hasattr(response, 'text') and response.text:
             logging.info("Resposta automática gerada com sucesso via response.text")
             print(f"DEBUG: Resposta automática gerada: {response.text}")
             return response.text.strip()
         elif response and hasattr(response, 'candidates') and response.candidates:
-            # Fallback para estrutura diferente de resposta
             candidate = response.candidates[0]
             if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                text_content = candidate.content.parts[0].text
                 logging.info("Resposta automática gerada com sucesso via candidates")
                 print(f"DEBUG: Resposta automática gerada via candidates: {candidate.content.parts[0].text}")
                 return candidate.content.parts[0].text.strip()
         else:
-            # Fallback para resposta padrão
             return f"""Olá,
 
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
+Muito obrigado(a) pelo contato e pelo interesse em nossos serviços!
 
-{sugestao}
+Sua mensagem foi automaticamente analisada e categorizada pelo nosso sistema MailMind como uma "Mensagem Geral". Agradecemos sua consideração e interesse em nossos serviços. É gratificante saber que nosso trabalho é valorizado.
+
+Esta mensagem não requer atenção imediata da nossa equipe de suporte.
+
+Caso precise de assistência ou tenha alguma dúvida sobre nossos serviços, por favor, entre em contato conosco através dos nossos canais oficiais de suporte, disponíveis em nosso site.
 
 Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
 
 Atenciosamente,
-Equipe MailMind
-MailMind System"""
+Equipe MailMind"""
             
     except Exception as e:
         logging.error(f"Erro ao gerar resposta automática: {e}")
         logging.error(f"Tipo de erro: {type(e).__name__}")
-        # Fallback para resposta padrão
+        print(f"DEBUG: Erro ao gerar resposta automática: {e}")
+        
+        # Fallback para resposta padrão em caso de erro
         return f"""Olá,
 
-Recebemos sua mensagem e após análise automatizada, identificamos que ela não requer atenção imediata de nossa equipe. Caso acredite que isso seja um engano, por favor, entre em contato através de um dos nossos canais.
+Muito obrigado(a) pelo contato e pelo interesse em nossos serviços!
 
-{sugestao}
+Sua mensagem foi automaticamente analisada e categorizada pelo nosso sistema MailMind como uma "Mensagem Geral". Agradecemos sua consideração e interesse em nossos serviços. É gratificante saber que nosso trabalho é valorizado.
+
+Esta mensagem não requer atenção imediata da nossa equipe de suporte.
+
+Caso precise de assistência ou tenha alguma dúvida sobre nossos serviços, por favor, entre em contato conosco através dos nossos canais oficiais de suporte, disponíveis em nosso site.
 
 Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
 
 Atenciosamente,
-Equipe MailMind
-MailMind System"""
+Equipe MailMind"""
 
 
 def split_multiple_emails(content: str) -> list:
@@ -312,7 +322,7 @@ def analyze_batch_emails(emails: list, service, mailer, config) -> list:
                     action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
                 else:
                     # Gerar resposta automática personalizada usando IA
-                    response_body = generate_automatic_response(sugestao, categoria, email_content)
+                    response_body = generate_automatic_response(sugestao, categoria, email_content, sender)
                     
                     if mailer:
                         mailer.send(
@@ -570,7 +580,7 @@ Subject: {subject}
                         action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
                     else:
                         # Gerar resposta automática personalizada usando IA
-                        response_body = generate_automatic_response(sugestao, categoria, email_content)
+                        response_body = generate_automatic_response(sugestao, categoria, email_content, extracted_sender)
                         
                         if mailer:
                             mailer.send(
