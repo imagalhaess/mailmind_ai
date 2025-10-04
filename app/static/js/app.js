@@ -10,6 +10,9 @@ class EmailAnalyzer {
     this.setupEventListeners();
     this.setupFileUpload();
     this.setupTabs();
+    this.setupAccessibility();
+    this.setupAnimations();
+    this.setupEasterEgg();
   }
 
   setupEventListeners() {
@@ -130,16 +133,34 @@ class EmailAnalyzer {
     // Update navigation
     document.querySelectorAll(".nav-item").forEach((item) => {
       item.classList.remove("active");
+      item.removeAttribute("aria-current");
     });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add("active");
+    const activeNavItem = document.querySelector(`[data-tab="${tabName}"]`);
+    activeNavItem.classList.add("active");
+    activeNavItem.setAttribute("aria-current", "page");
 
     // Update tab content
     document.querySelectorAll(".tab-content").forEach((content) => {
       content.classList.remove("active");
+      content.setAttribute("aria-hidden", "true");
     });
-    document.getElementById(`${tabName}-tab`).classList.add("active");
+    const activeTab = document.getElementById(`${tabName}-tab`);
+    activeTab.classList.add("active");
+    activeTab.setAttribute("aria-hidden", "false");
 
     this.currentTab = tabName;
+
+    // Anunciar mudança de aba para leitores de tela
+    const announcement = document.createElement("div");
+    announcement.setAttribute("aria-live", "polite");
+    announcement.setAttribute("aria-atomic", "true");
+    announcement.className = "sr-only";
+    announcement.textContent = `Aba ${tabName} ativada`;
+    document.body.appendChild(announcement);
+
+    setTimeout(() => {
+      document.body.removeChild(announcement);
+    }, 1000);
   }
 
   toggleInputType(type) {
@@ -473,6 +494,8 @@ class EmailAnalyzer {
     const toast = document.createElement("div");
     toast.className = `toast ${type}`;
     toast.textContent = message;
+    toast.setAttribute("role", "alert");
+    toast.setAttribute("aria-live", "polite");
 
     toastContainer.appendChild(toast);
 
@@ -480,6 +503,191 @@ class EmailAnalyzer {
     setTimeout(() => {
       toast.remove();
     }, 5000);
+  }
+
+  setupAccessibility() {
+    // Melhorar navegação por teclado
+    document.addEventListener("keydown", (e) => {
+      // ESC para fechar modais ou voltar
+      if (e.key === "Escape") {
+        const activeModal = document.querySelector(".modal.active");
+        if (activeModal) {
+          this.closeModal(activeModal);
+        }
+      }
+
+      // Enter e Space para botões
+      if (
+        (e.key === "Enter" || e.key === " ") &&
+        e.target.classList.contains("btn")
+      ) {
+        e.preventDefault();
+        e.target.click();
+      }
+    });
+
+    // Adicionar ARIA labels dinâmicos
+    this.updateAriaLabels();
+  }
+
+  setupAnimations() {
+    // Adicionar animações suaves aos elementos
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("animate-slide-up");
+        }
+      });
+    });
+
+    // Observar elementos que devem ser animados
+    document.querySelectorAll(".card, .test-card").forEach((el) => {
+      observer.observe(el);
+    });
+  }
+
+  updateAriaLabels() {
+    // Atualizar labels ARIA dinamicamente
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    if (analyzeBtn) {
+      analyzeBtn.setAttribute(
+        "aria-label",
+        "Analisar email com inteligência artificial"
+      );
+    }
+
+    const fileInput = document.getElementById("fileInput");
+    if (fileInput) {
+      fileInput.setAttribute(
+        "aria-label",
+        "Selecionar arquivo de email para análise"
+      );
+    }
+
+    const emailContent = document.getElementById("emailContent");
+    if (emailContent) {
+      emailContent.setAttribute(
+        "aria-label",
+        "Digite ou cole o conteúdo do email para análise"
+      );
+    }
+  }
+
+  closeModal(modal) {
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  setupEasterEgg() {
+    const easterEggBtn = document.getElementById("easterEggBtn");
+    const easterEggPopup = document.getElementById("easterEggPopup");
+    const easterEggImage = document.getElementById("easterEggImage");
+
+    if (
+      !this.validateEasterEggElements(
+        easterEggBtn,
+        easterEggPopup,
+        easterEggImage
+      )
+    ) {
+      return;
+    }
+
+    this.initializeEasterEggEvents(
+      easterEggBtn,
+      easterEggPopup,
+      easterEggImage
+    );
+  }
+
+  validateEasterEggElements(btn, popup, image) {
+    return btn && popup && image;
+  }
+
+  initializeEasterEggEvents(btn, popup, image) {
+    btn.addEventListener("click", () => this.showEasterEgg(popup, image));
+    btn.addEventListener("keydown", (e) =>
+      this.handleEasterEggKeydown(e, popup, image)
+    );
+  }
+
+  handleEasterEggKeydown(event, popup, image) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      this.showEasterEgg(popup, image);
+    }
+  }
+
+  showEasterEgg(popup, imageElement) {
+    const randomImagePath = this.getRandomImagePath();
+
+    this.loadImageWithFallback(imageElement, randomImagePath);
+    this.displayPopup(popup);
+    this.schedulePopupClose(popup);
+  }
+
+  getRandomImagePath() {
+    // Lista de TODAS as imagens JPG da pasta (excluindo Zone.Identifier)
+    const availableImages = [
+      "/static/images/IMG-20251003-WA0014.jpg",
+      "/static/images/IMG-20251003-WA0015.jpg",
+      "/static/images/IMG-20251003-WA0016.jpg",
+      "/static/images/IMG-20251003-WA0017.jpg",
+      "/static/images/IMG-20251003-WA0018.jpg",
+      "/static/images/IMG-20251003-WA0019.jpg",
+      "/static/images/IMG-20251003-WA0020.jpg",
+      "/static/images/IMG-20251003-WA0021.jpg",
+      "/static/images/IMG-20251003-WA0022.jpg",
+      "/static/images/IMG-20251003-WA0023.jpg",
+      "/static/images/IMG-20251003-WA0024.jpg",
+      "/static/images/IMG-20251003-WA0025.jpg",
+      "/static/images/IMG-20251003-WA0026.jpg",
+      "/static/images/IMG-20251003-WA0027.jpg",
+      "/static/images/IMG-20251003-WA0028.jpg",
+      "/static/images/IMG-20251003-WA0029.jpg",
+      "/static/images/IMG-20251003-WA0030.jpg",
+      "/static/images/IMG-20251003-WA0031.jpg",
+      "/static/images/IMG-20251003-WA0032.jpg",
+      "/static/images/IMG-20251003-WA0033.jpg",
+      "/static/images/IMG-20251003-WA0034.jpg",
+      "/static/images/IMG-20251003-WA0035.jpg",
+      "/static/images/IMG-20251003-WA0036.jpg",
+      "/static/images/IMG-20251003-WA0037.jpg",
+      "/static/images/IMG-20251003-WA0038.jpg",
+    ];
+
+    const randomIndex = Math.floor(Math.random() * availableImages.length);
+    return availableImages[randomIndex];
+  }
+
+  loadImageWithFallback(imageElement, imagePath) {
+    // Debug: log para verificar qual imagem está sendo carregada
+    console.log("Tentando carregar:", imagePath);
+
+    imageElement.src = imagePath;
+
+    imageElement.onerror = () => {
+      console.log("Erro ao carregar imagem:", imagePath);
+      // Fallback para uma imagem padrão ou placeholder
+      imageElement.src =
+        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzZjNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbSBuw6NvIGVuY29udHJhZGE8L3RleHQ+PC9zdmc+";
+    };
+
+    imageElement.onload = () => {
+      console.log("Imagem carregada com sucesso:", imagePath);
+    };
+  }
+
+  displayPopup(popup) {
+    popup.classList.add("active");
+    popup.setAttribute("aria-hidden", "false");
+  }
+
+  schedulePopupClose(popup) {
+    setTimeout(() => {
+      popup.classList.remove("active");
+      popup.setAttribute("aria-hidden", "true");
+    }, 2000); // 2 segundos
   }
 }
 
