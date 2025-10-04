@@ -15,4 +15,6 @@ from app import create_app
 application = create_app()
 
 if __name__ == "__main__":
-    application.run()
+    port = int(os.getenv("PORT", 8000))
+    print(f"🚀 Iniciando MailMind via WSGI em http://0.0.0.0:{port}")
+    application.run(host="0.0.0.0", port=port, debug=False)
