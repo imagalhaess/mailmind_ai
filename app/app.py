@@ -72,7 +72,7 @@ def read_text_from_upload() -> Tuple[str, str]:
                 if len(cleaned_text.strip()) < 30:
                     cleaned_text = f"Conteúdo PDF extraído com dificuldade. Texto original: {text[:200]}..."
                 
-                logging.info(f"PDF extraído: {len(cleaned_text)} caracteres")
+                # PDF extraído com sucesso
                 return cleaned_text, "pdf"
         return "", "pdf"
 
@@ -150,65 +150,28 @@ def generate_automatic_response(sugestao, categoria, email_content, sender_email
         Gere uma resposta completa e personalizada agora:
         """
         
-        logging.info(f"Gerando resposta automática para categoria: {categoria}")
-        logging.info(f"Sugestão: {sugestao}")
+        # Gerando resposta automática
         
-        print(f"DEBUG: Gerando resposta automática para categoria: {categoria}")
-        print(f"DEBUG: Sugestão: {sugestao}")
         
         response = client.generate_content(prompt)
         
-        logging.info(f"Tipo da resposta: {type(response)}")
-        print(f"DEBUG: Tipo da resposta: {type(response)}")
-        
         # Verifica diferentes estruturas de resposta
         if response and hasattr(response, 'text') and response.text:
-            logging.info("Resposta automática gerada com sucesso via response.text")
-            print(f"DEBUG: Resposta automática gerada: {response.text}")
             return response.text.strip()
         elif response and hasattr(response, 'candidates') and response.candidates:
             candidate = response.candidates[0]
             if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                text_content = candidate.content.parts[0].text
-                logging.info("Resposta automática gerada com sucesso via candidates")
-                print(f"DEBUG: Resposta automática gerada via candidates: {candidate.content.parts[0].text}")
                 return candidate.content.parts[0].text.strip()
         else:
-            return f"""Olá,
-
-Muito obrigado(a) pelo contato e pelo interesse em nossos serviços!
-
-Sua mensagem foi automaticamente analisada e categorizada pelo nosso sistema MailMind como uma "Mensagem Geral". Agradecemos sua consideração e interesse em nossos serviços. É gratificante saber que nosso trabalho é valorizado.
-
-Esta mensagem não requer atenção imediata da nossa equipe de suporte.
-
-Caso precise de assistência ou tenha alguma dúvida sobre nossos serviços, por favor, entre em contato conosco através dos nossos canais oficiais de suporte, disponíveis em nosso site.
-
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
-
-Atenciosamente,
-Equipe MailMind"""
+            # Fallback: retorna mensagem genérica se a IA falhar
+            return "Obrigado pelo contato. Sua mensagem foi recebida e será analisada pela nossa equipe."
             
     except Exception as e:
         logging.error(f"Erro ao gerar resposta automática: {e}")
         logging.error(f"Tipo de erro: {type(e).__name__}")
-        print(f"DEBUG: Erro ao gerar resposta automática: {e}")
         
         # Fallback para resposta padrão em caso de erro
-        return f"""Olá,
-
-Muito obrigado(a) pelo contato e pelo interesse em nossos serviços!
-
-Sua mensagem foi automaticamente analisada e categorizada pelo nosso sistema MailMind como uma "Mensagem Geral". Agradecemos sua consideração e interesse em nossos serviços. É gratificante saber que nosso trabalho é valorizado.
-
-Esta mensagem não requer atenção imediata da nossa equipe de suporte.
-
-Caso precise de assistência ou tenha alguma dúvida sobre nossos serviços, por favor, entre em contato conosco através dos nossos canais oficiais de suporte, disponíveis em nosso site.
-
-Esta é uma resposta automática gerada pelo nosso sistema de análise de emails, por favor, não responda para este endereço.
-
-Atenciosamente,
-Equipe MailMind"""
+        return "Obrigado pelo contato. Sua mensagem foi recebida e será analisada pela nossa equipe."
 
 
 def split_multiple_emails(content: str) -> list:
@@ -248,11 +211,11 @@ def split_multiple_emails(content: str) -> list:
         matches = re.findall(separator, content, re.IGNORECASE)
         separator_count += len(matches)
     
-    logging.info(f"Encontrados {separator_count} separadores de email no conteúdo")
+        # Verificando separadores de email
     
     # Se não encontrar separadores suficientes, trata como um único email
     if separator_count == 0:
-        logging.info("Nenhum separador encontrado, tratando como email único")
+        # Tratando como email único
         return [content]
     
     # Se encontrar separadores, divide o conteúdo
@@ -260,7 +223,7 @@ def split_multiple_emails(content: str) -> list:
     
     for separator in email_separators:
         if re.search(separator, content, re.IGNORECASE):
-            logging.info(f"Dividindo por separador: {separator}")
+            # Dividindo por separador encontrado
             # Divide pelos separadores encontrados
             parts = re.split(separator, content, flags=re.IGNORECASE)
             emails = []
@@ -280,7 +243,7 @@ def split_multiple_emails(content: str) -> list:
     # Remove emails vazios e limpa
     emails = [email.strip() for email in emails if email.strip()]
     
-    logging.info(f"Dividido em {len(emails)} emails")
+    # Divisão de emails concluída
     
     # Se só temos um email após a divisão, retorna como lista com um item
     if len(emails) == 1:
@@ -295,7 +258,7 @@ def analyze_batch_emails(emails: list, service, mailer, config) -> list:
     
     for i, email_content in enumerate(emails, 1):
         try:
-            logging.info(f"📧 Analisando email {i}/{len(emails)}")
+            # Analisando email
             
             # Extrai remetente
             sender = extract_sender_from_email(email_content)
@@ -319,7 +282,7 @@ def analyze_batch_emails(emails: list, service, mailer, config) -> list:
             if atencao.upper() == "NÃO" and sender:
                 # Verifica se é spam - spam NÃO deve receber resposta automática
                 if categoria.lower() == "spam":
-                    action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+                    action_result = " Nenhuma resposta automática foi enviada (spam detectado)"
                 else:
                     # Gerar resposta automática personalizada usando IA
                     response_body = generate_automatic_response(sugestao, categoria, email_content, sender)
@@ -330,9 +293,9 @@ def analyze_batch_emails(emails: list, service, mailer, config) -> list:
                             subject="Resposta automática - MailMind",
                             body=response_body,
                         )
-                        action_result = f"✅ Resposta automática ENVIADA para {sender}"
+                        action_result = f" Resposta automática ENVIADA para {sender}"
                     else:
-                        action_result = f"📧 [SIMULAÇÃO] Resposta seria enviada para {sender}"
+                        action_result = f" [SIMULAÇÃO] Resposta seria enviada para {sender}"
                     
             elif atencao.upper() == "SIM":
                 # Encaminhamento para curadoria
@@ -355,9 +318,9 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                         subject=f"Encaminhamento para curadoria - {categoria} (Email {i}/{len(emails)})",
                         body=forward_body,
                     )
-                    action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
+                    action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
                 else:
-                    action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para curadoria"
+                    action_result = f" [SIMULAÇÃO] Seria encaminhado para curadoria"
             
             results.append({
                 'email_number': i,
@@ -371,7 +334,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
             })
             
         except Exception as e:
-            logging.error(f"❌ Erro ao analisar email {i}: {e}")
+            logging.error(f" Erro ao analisar email {i}: {e}")
             results.append({
                 'email_number': i,
                 'sender': 'ERRO',
@@ -379,7 +342,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                 'atencao_humana': 'ERRO',
                 'resumo': f'Erro na análise: {e}',
                 'sugestao': 'Verificar manualmente',
-                'action_result': f'❌ Falha na análise: {e}',
+                'action_result': f' Falha na análise: {e}',
                 'content_preview': email_content[:200] + "..." if len(email_content) > 200 else email_content
             })
     
@@ -472,9 +435,9 @@ def create_app() -> Flask:
                 password=sendgrid_password,
                 default_from=noreply_address,
             )
-            logging.info("✅ SendGrid SMTP configurado")
+            logging.info(" SendGrid SMTP configurado")
         except Exception as e:
-            logging.warning(f"❌ SendGrid SMTP falhou: {e}")
+            logging.warning(f" SendGrid SMTP falhou: {e}")
             mailer = None
     
     # Tentativa 2: Gmail SMTP (fallback)
@@ -493,21 +456,21 @@ def create_app() -> Flask:
                     password=gmail_password,
                     default_from=gmail_user,
                 )
-                logging.info("✅ Gmail SMTP configurado (fallback)")
+                logging.info(" Gmail SMTP configurado (fallback)")
             except Exception as e:
-                logging.warning(f"❌ Gmail SMTP falhou: {e}")
+                logging.warning(f" Gmail SMTP falhou: {e}")
                 mailer = None
     
     # Modo simulação se ambos falharem
     if mailer is None:
-        logging.warning("❌ Nenhum SMTP configurado - modo simulação ativado")
+        logging.warning(" Nenhum SMTP configurado - modo simulação ativado")
 
     # Configuração de logging
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s %(levelname)s %(name)s: %(message)s'
     )
-    logging.info("✅ Configuração carregada com sucesso")
+    logging.info(" Configuração carregada com sucesso")
 
     app = Flask(__name__)
     app.secret_key = os.getenv("APP_SECRET", "dev-secret")
@@ -547,7 +510,7 @@ Subject: {subject}
             if not email_content:
                 return {"error": "Email content is required"}, 400
             
-            logging.info(f"📨 Webhook recebeu email de: {sender}")
+            logging.info(f" Webhook recebeu email de: {sender}")
             
             # Processa o email automaticamente
             emails = split_multiple_emails(formatted_email)
@@ -577,7 +540,7 @@ Subject: {subject}
                 if atencao.upper() == "NÃO" and extracted_sender:
                     # Verifica se é spam - spam NÃO deve receber resposta automática
                     if categoria.lower() == "spam":
-                        action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+                        action_result = " Nenhuma resposta automática foi enviada (spam detectado)"
                     else:
                         # Gerar resposta automática personalizada usando IA
                         response_body = generate_automatic_response(sugestao, categoria, email_content, extracted_sender)
@@ -588,9 +551,9 @@ Subject: {subject}
                                 subject="Resposta automática - MailMind",
                                 body=response_body,
                             )
-                            action_result = f"✅ Resposta automática ENVIADA para {extracted_sender}"
+                            action_result = f" Resposta automática ENVIADA para {extracted_sender}"
                         else:
-                            action_result = f"📧 [SIMULAÇÃO] Resposta seria enviada para {extracted_sender}"
+                            action_result = f" [SIMULAÇÃO] Resposta seria enviada para {extracted_sender}"
                         
                 elif atencao.upper() == "SIM":
                     # Encaminhamento para curadoria
@@ -613,9 +576,9 @@ Este email foi automaticamente encaminhado pelo sistema MailMind via webhook."""
                             subject=f"Webhook - Encaminhamento para curadoria - {categoria}",
                             body=forward_body,
                         )
-                        action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
+                        action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
                     else:
-                        action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para curadoria"
+                        action_result = f" [SIMULAÇÃO] Seria encaminhado para curadoria"
                 
                 return {
                     "status": "success",
@@ -631,7 +594,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind via webhook."""
                 }
                 
         except Exception as e:
-            logging.error(f"❌ Erro no webhook: {e}")
+            logging.error(f" Erro no webhook: {e}")
             return {"error": f"Erro interno: {str(e)}"}, 500
 
     @app.route("/webhook/test", methods=["GET", "POST"])
@@ -688,7 +651,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind via webhook."""
         if atencao.upper() == "NÃO":
             # Verifica se é spam - spam NÃO deve receber resposta automática
             if categoria.lower() == "spam":
-                action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+                action_result = " Nenhuma resposta automática foi enviada (spam detectado)"
             else:
                 # Gerar resposta automática personalizada usando IA
                 response_body = generate_automatic_response(sugestao, categoria, data["content"])
@@ -699,9 +662,9 @@ Este email foi automaticamente encaminhado pelo sistema MailMind via webhook."""
                         subject="Resposta automática - Email Analyzer",
                         body=response_body,
                     )
-                    action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
+                    action_result = f" Resposta automática ENVIADA para o REMETENTE ({sender_email})"
                 else:
-                    action_result = f"📧 [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
+                    action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
         elif atencao.upper() == "SIM":
             forward_body = f"""Email recebido para curadoria humana:
 
@@ -722,11 +685,11 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                     subject=f"Encaminhamento para curadoria - {categoria}",
                     body=forward_body,
                 )
-                action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
+                action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
             else:
-                action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
+                action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
         else:
-            action_result = "❓ Categoria não identificada"
+            action_result = " Categoria não identificada"
         
         return jsonify({
             "categoria": categoria,
@@ -750,7 +713,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
         
         if len(emails) > 1:
             # Análise em lote - múltiplos emails
-            logging.info(f"📁 Detectados {len(emails)} emails para análise em lote")
+            logging.info(f" Detectados {len(emails)} emails para análise em lote")
             results = analyze_batch_emails(emails, service, mailer, config)
             
             return jsonify({
@@ -772,7 +735,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                             "atencao_humana": "SIM",
                             "resumo": "Arquivo PDF processado com dificuldade. Requer análise manual.",
                             "sugestao": "Revisar manualmente o conteúdo do PDF para análise adequada.",
-                            "acao_executada": "📄 PDF processado - requer análise manual",
+                            "acao_executada": " PDF processado - requer análise manual",
                             "origem": origin
                         })
                     # Para outros casos, retorna erro genérico
@@ -789,7 +752,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                         "atencao_humana": "SIM",
                         "resumo": "Arquivo PDF processado com dificuldade. Requer análise manual.",
                         "sugestao": "Revisar manualmente o conteúdo do PDF para análise adequada.",
-                        "acao_executada": "📄 PDF processado - requer análise manual",
+                        "acao_executada": " PDF processado - requer análise manual",
                         "origem": origin
                     })
                 return jsonify({"error": "Erro na análise do email. Tente novamente."}), 500
@@ -819,17 +782,13 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                 if atencao.upper() == "NÃO":
                     # Verifica se é spam - spam NÃO deve receber resposta automática
                     if categoria.lower() == "spam":
-                        action_result = "🚫 Nenhuma resposta automática foi enviada (spam detectado)"
+                        action_result = " Nenhuma resposta automática foi enviada (spam detectado)"
                         logging.info(f"Spam detectado - nenhuma resposta enviada para: {sender_email}")
-                        print(f"DEBUG: Spam detectado - categoria: {categoria}")
                     else:
-                        print(f"DEBUG: Email improdutivo não-spam - categoria: {categoria}")
                         # Para outros emails IMPRODUTIVOS: responder automaticamente para o REMETENTE ORIGINAL
                         if sender_email:
-                            print(f"DEBUG: Chamando generate_automatic_response para categoria: {categoria}")
                             # Gerar resposta automática personalizada usando IA
                             response_body = generate_automatic_response(sugestao, categoria, raw_text)
-                            print(f"DEBUG: Resposta gerada: {response_body[:100]}...")
                         
                             # Tentar enviar com fallback automático
                             email_sent = False
@@ -840,7 +799,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                         subject="Resposta automática - MailMind",
                                         body=response_body,
                                     )
-                                    action_result = f"✅ Resposta automática ENVIADA para o REMETENTE ({sender_email})"
+                                    action_result = f" Resposta automática ENVIADA para o REMETENTE ({sender_email})"
                                     logging.info(f"Email improdutivo detectado - resposta automática enviada para remetente: {sender_email}")
                                     email_sent = True
                             except Exception as e:
@@ -865,17 +824,17 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                             subject="Resposta automática - MailMind",
                                             body=response_body,
                                         )
-                                        action_result = f"✅ Resposta automática ENVIADA via Gmail SMTP para o REMETENTE ({sender_email})"
+                                        action_result = f" Resposta automática ENVIADA via Gmail SMTP para o REMETENTE ({sender_email})"
                                         logging.info(f"Email improdutivo detectado - resposta automática enviada via Gmail SMTP para remetente: {sender_email}")
                                         email_sent = True
                                 except Exception as fallback_error:
                                     logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
                             
                             if not email_sent:
-                                action_result = f"📧 [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
+                                action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
                                 logging.info(f"Email improdutivo detectado - modo simulação (SMTP não configurado)")
                         else:
-                            action_result = f"❌ Email do remetente não identificado - não foi possível enviar resposta automática"
+                            action_result = f" Email do remetente não identificado - não foi possível enviar resposta automática"
                 elif atencao.upper() == "SIM":
                     # Para emails PRODUTIVOS: encaminhar para curadoria humana
                     if config.curator_address:
@@ -902,7 +861,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                     subject=f"Encaminhamento para curadoria - {categoria}",
                                     body=forward_body,
                                 )
-                                action_result = f"✅ ENVIADO para CURADORIA HUMANA ({config.curator_address})"
+                                action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
                                 logging.info(f"Email produtivo detectado - encaminhado para curadoria: {config.curator_address}")
                                 email_sent = True
                         except Exception as e:
@@ -927,17 +886,17 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                         subject=f"Encaminhamento para curadoria - {categoria}",
                                         body=forward_body,
                                     )
-                                    action_result = f"✅ ENVIADO via Gmail SMTP para CURADORIA HUMANA ({config.curator_address})"
+                                    action_result = f" ENVIADO via Gmail SMTP para CURADORIA HUMANA ({config.curator_address})"
                                     logging.info(f"Email produtivo detectado - encaminhado via Gmail SMTP para curadoria: {config.curator_address}")
                                     email_sent = True
                             except Exception as fallback_error:
                                 logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
                         
                         if not email_sent:
-                            action_result = f"📧 [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
+                            action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
                             logging.info(f"Email produtivo detectado - modo simulação (SMTP não configurado)")
             except Exception as e:
-                action_result = f"❌ Falha ao enviar e-mail: {e}"
+                action_result = f" Falha ao enviar e-mail: {e}"
                 logging.error(f"Erro no envio de email: {e}")
 
             return jsonify({
@@ -995,7 +954,7 @@ app = create_app()
 def main():
     """Função principal para executar a aplicação."""
     port = int(os.getenv("PORT", 8001))
-    print(f"🚀 Iniciando MailMind em http://localhost:{port}")
+    print(f" Iniciando MailMind em http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)
 
 
