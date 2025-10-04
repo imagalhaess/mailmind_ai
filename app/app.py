@@ -979,12 +979,14 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
     return app
 
 
+# Exportar app para gunicorn
+app = create_app()
+
 def main():
     """Função principal para executar a aplicação."""
-    app = create_app()
     port = int(os.getenv("PORT", 8001))
     print(f"🚀 Iniciando MailMind em http://localhost:{port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=False)
 
 
 if __name__ == "__main__":
