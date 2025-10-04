@@ -3,4 +3,3 @@ python-dotenv
 google-generativeai
 Flask
 pdfminer.six
-gunicorn
