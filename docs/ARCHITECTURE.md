@@ -341,7 +341,8 @@ python app.py
 - **Flask**: Framework web
 - **google-generativeai**: Cliente Google Gemini
 - **python-dotenv**: Gerenciamento de variáveis de ambiente
-- **pdfminer.six**: Processamento de PDFs
+- **pdfminer.six**: Processamento de PDFs (fallback)
+- **PyPDF2**: Processamento seguro de PDFs (primário)
 - **pytest**: Framework de testes
 
 ---

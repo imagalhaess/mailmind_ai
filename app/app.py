@@ -6,12 +6,37 @@ from typing import Tuple
 from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, jsonify
 from dotenv import load_dotenv
 from pdfminer.high_level import extract_text
+import PyPDF2
 
 from .config import load_config
 from .providers.gemini_client import GeminiClient
 from .services.email_analyzer import EmailAnalyzerService
 from .utils.text_preprocess import basic_preprocess
 from .utils.email_sender import EmailSender
+
+
+def extract_text_from_pdf_safe(file_stream) -> str:
+    """
+    Extrai texto de PDF de forma segura, limitando o tamanho para evitar timeouts.
+    """
+    try:
+        pdf_reader = PyPDF2.PdfReader(file_stream)
+        text = ""
+        max_chars = 20000  # Limite preventivo
+        
+        for page in pdf_reader.pages:
+            page_text = page.extract_text() or ""
+            text += page_text
+            
+            # Para se atingir o limite de caracteres
+            if len(text) > max_chars:
+                text = text[:max_chars]
+                break
+                
+        return text.strip()
+    except Exception as e:
+        logging.error(f"Erro ao processar PDF: {e}")
+        return ""
 
 
 def read_text_from_upload() -> Tuple[str, str]:
@@ -32,6 +57,11 @@ def read_text_from_upload() -> Tuple[str, str]:
     file = request.files.get("email_file")
     if not file or file.filename == "":
         return "", "none"
+    
+    # Limite de tamanho de arquivo (2MB)
+    MAX_FILE_SIZE_MB = 2
+    if hasattr(file, 'content_length') and file.content_length and file.content_length > MAX_FILE_SIZE_MB * 1024 * 1024:
+        return "", "file_too_large"
 
     filename = file.filename.lower()
     data = file.read()
@@ -40,10 +70,10 @@ def read_text_from_upload() -> Tuple[str, str]:
         return data.decode("utf-8", errors="ignore"), "txt"
     if filename.endswith(".pdf"):
         with io.BytesIO(data) as buf:
-            text = extract_text(buf)
+            # Usa processamento seguro de PDF
+            text = extract_text_from_pdf_safe(buf)
             if text:
-                # Melhor limpeza do texto PDF
-                # Primeiro, preserva quebras de linha que podem ser importantes para separar emails
+                # Limpeza básica do texto PDF
                 lines = text.split('\n')
                 cleaned_lines = []
                 
@@ -72,7 +102,6 @@ def read_text_from_upload() -> Tuple[str, str]:
                 if len(cleaned_text.strip()) < 30:
                     cleaned_text = f"Conteúdo PDF extraído com dificuldade. Texto original: {text[:200]}..."
                 
-                # PDF extraído com sucesso
                 return cleaned_text, "pdf"
         return "", "pdf"
 
@@ -435,7 +464,7 @@ def create_app() -> Flask:
                 password=sendgrid_password,
                 default_from=noreply_address,
             )
-            logging.info(" SendGrid SMTP configurado")
+            # SendGrid SMTP configurado
         except Exception as e:
             logging.warning(f" SendGrid SMTP falhou: {e}")
             mailer = None
@@ -456,7 +485,7 @@ def create_app() -> Flask:
                     password=gmail_password,
                     default_from=gmail_user,
                 )
-                logging.info(" Gmail SMTP configurado (fallback)")
+                # Gmail SMTP configurado (fallback)
             except Exception as e:
                 logging.warning(f" Gmail SMTP falhou: {e}")
                 mailer = None
@@ -470,7 +499,7 @@ def create_app() -> Flask:
         level=logging.INFO,
         format='%(asctime)s %(levelname)s %(name)s: %(message)s'
     )
-    logging.info(" Configuração carregada com sucesso")
+    # Configuração carregada com sucesso
 
     app = Flask(__name__)
     app.secret_key = os.getenv("APP_SECRET", "dev-secret")
@@ -510,7 +539,7 @@ Subject: {subject}
             if not email_content:
                 return {"error": "Email content is required"}, 400
             
-            logging.info(f" Webhook recebeu email de: {sender}")
+            # Webhook recebeu email
             
             # Processa o email automaticamente
             emails = split_multiple_emails(formatted_email)
@@ -706,6 +735,8 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
     def analyze():
         raw_text, origin = read_text_from_upload()
         if not raw_text:
+            if origin == "file_too_large":
+                return jsonify({"error": "Arquivo muito grande. Limite de 2MB."}), 400
             return jsonify({"error": "Envie um arquivo .txt/.pdf ou cole o texto do e-mail."}), 400
 
         # Detecta se há múltiplos emails no arquivo
@@ -713,7 +744,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
         
         if len(emails) > 1:
             # Análise em lote - múltiplos emails
-            logging.info(f" Detectados {len(emails)} emails para análise em lote")
+            # Detectados emails para análise em lote
             results = analyze_batch_emails(emails, service, mailer, config)
             
             return jsonify({
@@ -783,7 +814,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                     # Verifica se é spam - spam NÃO deve receber resposta automática
                     if categoria.lower() == "spam":
                         action_result = " Nenhuma resposta automática foi enviada (spam detectado)"
-                        logging.info(f"Spam detectado - nenhuma resposta enviada para: {sender_email}")
+                        # Spam detectado - nenhuma resposta enviada
                     else:
                         # Para outros emails IMPRODUTIVOS: responder automaticamente para o REMETENTE ORIGINAL
                         if sender_email:
@@ -800,7 +831,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                         body=response_body,
                                     )
                                     action_result = f" Resposta automática ENVIADA para o REMETENTE ({sender_email})"
-                                    logging.info(f"Email improdutivo detectado - resposta automática enviada para remetente: {sender_email}")
+                                    # Email improdutivo detectado - resposta automática enviada
                                     email_sent = True
                             except Exception as e:
                                 logging.warning(f"Falha no envio principal: {e}")
@@ -825,14 +856,14 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                             body=response_body,
                                         )
                                         action_result = f" Resposta automática ENVIADA via Gmail SMTP para o REMETENTE ({sender_email})"
-                                        logging.info(f"Email improdutivo detectado - resposta automática enviada via Gmail SMTP para remetente: {sender_email}")
+                                        # Email improdutivo detectado - resposta automática enviada via Gmail SMTP
                                         email_sent = True
                                 except Exception as fallback_error:
                                     logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
                             
                             if not email_sent:
                                 action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email}):\n\n{response_body}"
-                                logging.info(f"Email improdutivo detectado - modo simulação (SMTP não configurado)")
+                                # Email improdutivo detectado - modo simulação (SMTP não configurado)
                         else:
                             action_result = f" Email do remetente não identificado - não foi possível enviar resposta automática"
                 elif atencao.upper() == "SIM":
@@ -862,7 +893,7 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                     body=forward_body,
                                 )
                                 action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
-                                logging.info(f"Email produtivo detectado - encaminhado para curadoria: {config.curator_address}")
+                                # Email produtivo detectado - encaminhado para curadoria
                                 email_sent = True
                         except Exception as e:
                             logging.warning(f"Falha no envio principal: {e}")
@@ -887,14 +918,14 @@ Este email foi automaticamente encaminhado pelo sistema MailMind."""
                                         body=forward_body,
                                     )
                                     action_result = f" ENVIADO via Gmail SMTP para CURADORIA HUMANA ({config.curator_address})"
-                                    logging.info(f"Email produtivo detectado - encaminhado via Gmail SMTP para curadoria: {config.curator_address}")
+                                    # Email produtivo detectado - encaminhado via Gmail SMTP para curadoria
                                     email_sent = True
                             except Exception as fallback_error:
                                 logging.error(f"Falha no fallback Gmail SMTP: {fallback_error}")
                         
                         if not email_sent:
                             action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
-                            logging.info(f"Email produtivo detectado - modo simulação (SMTP não configurado)")
+                            # Email produtivo detectado - modo simulação (SMTP não configurado)
             except Exception as e:
                 action_result = f" Falha ao enviar e-mail: {e}"
                 logging.error(f"Erro no envio de email: {e}")

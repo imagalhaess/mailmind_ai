@@ -8,7 +8,7 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 - **Análise com IA**: Usa Google Gemini para resumir e sugerir ações
 - **Respostas Automáticas**: Envia respostas para e-mails improdutivos
 - **Encaminhamento**: Direciona casos complexos para curadoria humana
-- **Interface Web**: Upload de arquivos (.txt/.pdf) ou entrada de texto
+- **Interface Web**: Upload de arquivos (.txt/.pdf) ou entrada de texto (limite: 2MB)
 
 ## Pré-requisitos
 
@@ -151,6 +151,7 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 - [x] Interface web completa
 - [x] Sistema de envio de emails via SMTP/Gmail
 - [x] Webhook básico para integração
+- [x] **Otimizações de Performance**: Limite de arquivo (2MB), processamento seguro de PDF, logs otimizados
 
 ### **Em Progresso (WIP)**
 
