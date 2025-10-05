@@ -476,82 +476,164 @@ def create_app() -> Flask:
 
     @app.route("/analyze", methods=["POST"]) 
     def analyze():
-        """Rota principal para análise de emails via interface web - PROCESSAMENTO ASSÍNCRONO."""
+        """Rota principal para análise de emails via interface web - ANÁLISE SÍNCRONA + SMTP ASSÍNCRONO."""
         raw_text, origin = read_text_from_upload()
         if not raw_text:
             if origin == "file_too_large":
-                return jsonify({"error": "Arquivo muito grande. Limite de 2MB."}), 400
-            return jsonify({"error": "Envie um arquivo .txt/.pdf ou cole o texto do e-mail."}), 400
+                return jsonify({"error": "📁 Arquivo muito grande. Limite de 2MB."}), 400
+            return jsonify({"error": "📝 Envie um arquivo .txt/.pdf ou cole o texto do e-mail."}), 400
 
         # Detecta se há múltiplos emails no arquivo
         emails = split_multiple_emails(raw_text)
         
         if len(emails) > 1:
-            # Análise em lote - múltiplos emails (assíncrono)
+            # Análise em lote - múltiplos emails
+            results = []
             for email_content in emails:
-                sender = extract_sender_from_email(email_content) or 'Não identificado'
-                threading.Thread(
-                    target=process_email_async, 
-                    args=(email_content, sender, service, mailer, config)
-                ).start()
+                try:
+                    sender = extract_sender_from_email(email_content) or 'Não identificado'
+                    preprocessed = basic_preprocess(email_content)
+                    result = service.analyze(preprocessed)
+                    
+                    # Determina categoria e ação
+                    categoria = result.get("categoria", "N/A")
+                    atencao = result.get("atencao_humana", "NÃO")
+                    resumo = result.get("resumo", "N/A")
+                    sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+                    
+                    # Inicia SMTP em background (se habilitado)
+                    if mailer:
+                        threading.Thread(
+                            target=process_email_async, 
+                            args=(email_content, sender, service, mailer, config)
+                        ).start()
+                    
+                    # Determina mensagem de ação baseada na categoria
+                    if atencao.upper() == "SIM":
+                        acao_msg = "📧 Será encaminhado para curadoria humana" if mailer else "📧 [SIMULAÇÃO] Seria encaminhado para curadoria"
+                    elif categoria.lower() == "spam":
+                        acao_msg = "🚫 Spam detectado - nenhuma ação necessária"
+                    else:
+                        acao_msg = "🤖 Resposta automática será enviada" if mailer else "🤖 [SIMULAÇÃO] Resposta automática seria enviada"
+                    
+                    results.append({
+                        "categoria": categoria,
+                        "atencao_humana": atencao,
+                        "resumo": resumo,
+                        "sugestao": sugestao,
+                        "sender": sender,
+                        "acao": acao_msg
+                    })
+                except Exception as e:
+                    results.append({
+                        "categoria": "❌ ERRO",
+                        "atencao_humana": "NÃO",
+                        "resumo": f"Falha na análise: {str(e)[:100]}...",
+                        "sugestao": "Verifique o conteúdo do email e tente novamente",
+                        "sender": "Não identificado",
+                        "acao": "⚠️ Erro no processamento - análise manual necessária"
+                    })
             
             return jsonify({
-                "status": "processing",
                 "total_emails": len(emails),
-                "message": f"Processamento assíncrono iniciado para {len(emails)} emails"
+                "results": results,
+                "message": f"✅ Análise concluída para {len(emails)} email(s)"
             })
         else:
-            # Análise individual - email único (assíncrono)
-            sender = extract_sender_from_email(raw_text) or 'Não identificado'
-            
-            # Inicia processamento assíncrono
-            threading.Thread(
-                target=process_email_async, 
-                args=(raw_text, sender, service, mailer, config)
-            ).start()
-            
-            return jsonify({
-                "status": "processing",
-                "message": "Email em processamento. Ações automáticas serão executadas em background.",
-                "sender": sender
-            })
+            # Análise individual - email único
+            try:
+                sender = extract_sender_from_email(raw_text) or 'Não identificado'
+                preprocessed = basic_preprocess(raw_text)
+                result = service.analyze(preprocessed)
+                
+                # Verifica se a análise foi bem-sucedida
+                if not result or 'categoria' not in result:
+                    raise Exception("Falha na análise do Gemini")
+                
+                # Determina categoria e ação
+                categoria = result.get("categoria", "N/A")
+                atencao = result.get("atencao_humana", "NÃO")
+                resumo = result.get("resumo", "N/A")
+                sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+                
+                # Inicia SMTP em background (se habilitado)
+                if mailer:
+                    threading.Thread(
+                        target=process_email_async, 
+                        args=(raw_text, sender, service, mailer, config)
+                    ).start()
+                    
+                    # Determina mensagem de ação baseada na categoria
+                    if atencao.upper() == "SIM":
+                        acao = "📧 Será encaminhado para curadoria humana"
+                    elif categoria.lower() == "spam":
+                        acao = "🚫 Spam detectado - nenhuma ação necessária"
+                    else:
+                        acao = "🤖 Resposta automática será enviada"
+                else:
+                    if atencao.upper() == "SIM":
+                        acao = "📧 [SIMULAÇÃO] Seria encaminhado para curadoria"
+                    elif categoria.lower() == "spam":
+                        acao = "🚫 Spam detectado - nenhuma ação necessária"
+                    else:
+                        acao = "🤖 [SIMULAÇÃO] Resposta automática seria enviada"
+                
+                return jsonify({
+                    "categoria": categoria,
+                    "atencao_humana": atencao,
+                    "resumo": resumo,
+                    "sugestao": sugestao,
+                    "acao": acao,
+                    "sender": sender
+                })
+                
+            except Exception as e:
+                logging.error(f"Erro na análise: {e}")
+                return jsonify({
+                    "error": "❌ Erro interno do servidor",
+                    "details": f"Falha na análise: {str(e)[:200]}...",
+                    "sugestao": "Tente novamente ou verifique o conteúdo do email"
+                }), 500
 
     @app.route("/test/<test_type>")
     def test_mock(test_type):
         """Rota para testar com dados mock."""
-        mock_data = get_mock_email_data()
-        
-        if test_type not in mock_data:
-            flash(f"Tipo de teste inválido. Use: {', '.join(mock_data.keys())}", "error")
-            return redirect(url_for("index"))
-        
-        data = mock_data[test_type]
-        
-        # Simula o processamento (individual)
-        preprocessed = basic_preprocess(data["content"])
-        result = service.analyze(preprocessed) # Chama o service
-        
-        # Simula as ações automáticas
-        categoria = result.get("categoria", "N/A")
-        atencao = result.get("atencao_humana", "N/A")
-        resumo = result.get("resumo", "N/A")
-        sugestao = result.get("sugestao_resposta_ou_acao", result.get("conteudo", "N/A"))
-        
-        extracted_sender = extract_sender_from_email(data["content"])
-        sender_email = extracted_sender or data["expected_sender"] # Usa o sender do mock se falhar
+        try:
+            mock_data = get_mock_email_data()
+            
+            if test_type not in mock_data:
+                return jsonify({
+                    "error": f"❌ Tipo de teste inválido. Use: {', '.join(mock_data.keys())}",
+                    "available_types": list(mock_data.keys())
+                }), 400
+            
+            data = mock_data[test_type]
+            
+            # Simula o processamento (individual)
+            preprocessed = basic_preprocess(data["content"])
+            result = service.analyze(preprocessed) # Chama o service
+            
+            # Simula as ações automáticas
+            categoria = result.get("categoria", "N/A")
+            atencao = result.get("atencao_humana", "N/A")
+            resumo = result.get("resumo", "N/A")
+            sugestao = result.get("sugestao_resposta_ou_acao", result.get("conteudo", "N/A"))
+            
+            extracted_sender = extract_sender_from_email(data["content"])
+            sender_email = extracted_sender or data["sender"] # Usa o sender do mock se falhar
 
-        # Lógica de ação consolidada
-        action_result = "Nenhuma ação executada"
-        if atencao.upper() == "NÃO":
-            if categoria.lower() != "spam":
-                response_body = generate_automatic_response(sugestao, categoria, data["content"], sender_email)
-                if mailer:
-                    mailer.send(to_address=sender_email, subject="Resposta automática - MailMind", body=response_body)
-                    action_result = f" Resposta automática ENVIADA para o REMETENTE ({sender_email})"
-                else:
-                    action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email})"
-        elif atencao.upper() == "SIM":
-            forward_body = f"""Email recebido para curadoria humana:
+            # Lógica de ação consolidada
+            action_result = "Nenhuma ação executada"
+            if atencao.upper() == "NÃO":
+                if categoria.lower() != "spam":
+                    response_body = generate_automatic_response(sugestao, categoria, data["content"])
+                    if mailer:
+                        mailer.send(to_address=sender_email, subject="Resposta automática - MailMind", body=response_body)
+                        action_result = f" Resposta automática ENVIADA para o REMETENTE ({sender_email})"
+                    else:
+                        action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email})"
+            elif atencao.upper() == "SIM":
+                forward_body = f"""Email recebido para curadoria humana:
 
 REMETENTE: {sender_email}
 CATEGORIA: {categoria}
@@ -562,22 +644,30 @@ SUGESTÃO/AÇÃO: {sugestao}
 {data['content'][:500]}...
 
 Este email foi automaticamente encaminhado pelo sistema MailMind."""
-            if mailer:
-                mailer.send(to_address=config.curator_address, subject=f"Encaminhamento para curadoria - {categoria}", body=forward_body)
-                action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
-            else:
-                action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address})"
+                if mailer:
+                    mailer.send(to_address=config.curator_address, subject=f"Encaminhamento para curadoria - {categoria}", body=forward_body)
+                    action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
+                else:
+                    action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address})"
         
-        return jsonify({
-            "categoria": categoria,
-            "atencao_humana": atencao,
-            "resumo": resumo,
-            "sugestao": sugestao,
-            "acao_executada": action_result,
-            "test_mode": True,
-            "test_type": test_type,
-            "sender_email": sender_email
-        })
+            return jsonify({
+                "categoria": categoria,
+                "atencao_humana": atencao,
+                "resumo": resumo,
+                "sugestao": sugestao,
+                "acao_executada": action_result,
+                "test_mode": True,
+                "test_type": test_type,
+                "sender_email": sender_email
+            })
+            
+        except Exception as e:
+            logging.error(f"Erro no teste mock: {e}", exc_info=True)
+            return jsonify({
+                "error": "❌ Erro no teste",
+                "details": f"Falha no processamento: {str(e)[:200]}...",
+                "test_type": test_type
+            }), 500
 
     # Rotas de Health Check e Mock Data
     @app.route('/health')
