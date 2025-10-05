@@ -4,17 +4,22 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 
 ## Funcionalidades
 
+### ✅ Implementado
 - **Classificação Automática**: Categoriza e-mails como Produtivo ou Improdutivo
 - **Análise com IA**: Usa Google Gemini para resumir e sugerir ações
-- **Respostas Automáticas**: Envia respostas para e-mails improdutivos
-- **Encaminhamento**: Direciona casos complexos para curadoria humana
 - **Interface Web**: Upload de arquivos (.txt/.pdf) ou entrada de texto (limite: 2MB)
+- **API Webhook**: Integração com sistemas externos
+- **Testes Integrados**: Botões para testar diferentes cenários
+
+### 🔮 Implementação Futura
+- **Respostas Automáticas**: Envio de respostas para e-mails improdutivos
+- **Encaminhamento**: Direcionamento automático para curadoria humana
+- **Processamento Assíncrono**: Background processing para melhor performance
 
 ## Pré-requisitos
 
 - Python 3.10+
 - Chave de API do Google Gemini
-- Conta SendGrid (opcional, para envio de e-mails/respostas automáticas)
 
 ## Instalação
 
@@ -46,13 +51,13 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 
 - `GEMINI_API_KEY`: Chave do Google AI Studio
 
-### Opcional (para envio de e-mails):
+### Opcional (para implementação futura):
 
-- `SMTP_HOST`: smtp.sendgrid.net
-- `SMTP_USER`: apikey
-- `SMTP_PASSWORD`: Sua chave SendGrid
-- `NOREPLY_ADDRESS`: Email remetente
-- `CURATOR_ADDRESS`: Email para curadoria humana
+- `SMTP_HOST`: smtp.sendgrid.net (respostas automáticas)
+- `SMTP_USER`: apikey (respostas automáticas)
+- `SMTP_PASSWORD`: Sua chave SendGrid (respostas automáticas)
+- `NOREPLY_ADDRESS`: Email remetente (respostas automáticas)
+- `CURATOR_ADDRESS`: Email para curadoria humana (encaminhamento)
 
 ## 🏃‍♂️ Execução
 

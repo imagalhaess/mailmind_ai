@@ -68,7 +68,7 @@ class GeminiClient:
                     time.sleep(2 ** attempt)  # Backoff exponencial
 
 
-    def generate_json(self, prompt: str, *, temperature: float = 0.2, max_output_tokens: int = 256) -> str:
+    def generate_json(self, prompt: str, *, temperature: float = 0.2, max_output_tokens: int = 1024) -> str:
         """Gera conteúdo em formato JSON (string) a partir do prompt fornecido."""
         
         response = self._attempt_generate(
@@ -86,7 +86,7 @@ class GeminiClient:
         return response.text
 
 
-    def generate_content(self, prompt: str, *, temperature: float = 0.2, max_output_tokens: int = 256):
+    def generate_content(self, prompt: str, *, temperature: float = 0.2, max_output_tokens: int = 1024):
         """Gera conteúdo em texto livre a partir do prompt fornecido. Retorna o objeto response completo."""
         
         response = self._attempt_generate(

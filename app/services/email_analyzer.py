@@ -14,25 +14,16 @@ class EmailAnalyzerService:
     client: GeminiClient
 
     def build_prompt(self, email_content: str) -> str:
-        return f"""Você é um assistente de IA que analisa e-mails e decide se eles precisam de atenção humana.
-
-Leia o e-mail abaixo e responda **somente em JSON** no formato:
+        return f"""Analise este email e responda em JSON:
 
 {{
   "atencao_humana": "SIM" ou "NÃO",
-  "categoria": "string",
-  "resumo": "string",
-  "sugestao_resposta_ou_acao": "string"
+  "categoria": "spam/produtivo/reclamacao/outro",
+  "resumo": "resumo curto",
+  "sugestao_resposta_ou_acao": "acao sugerida"
 }}
 
-Regras resumidas:
-- Se for proposta, parceria, dúvida, reclamação ou lead → "SIM".
-- Se for elogio, felicitação, mensagem genérica ou spam → "NÃO".
-
-E-mail para análise:
----
-{email_content}
----"""
+Email: {email_content}"""
 
     def analyze(self, email_content: str) -> Dict[str, Any]:
         prompt = self.build_prompt(email_content)
