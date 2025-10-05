@@ -291,24 +291,27 @@ def create_app() -> Flask:
     service = EmailAnalyzerService(client=client)
     
     # 2. Configuração do Mailer (SMTP) - Lógica de Fallback
+    # Controle de modo SMTP via variável de ambiente
+    smtp_enabled = os.getenv("SMTP_ENABLED", "true").lower() == "true"
     mailer = None
     
-    # Tentativa 1: SendGrid SMTP
-    sendgrid_host = os.getenv("SMTP_HOST", "")
-    sendgrid_port = int(os.getenv("SMTP_PORT", "587"))
-    sendgrid_user = os.getenv("SMTP_USER", "")
-    sendgrid_password = os.getenv("SMTP_PASSWORD", "")
-    noreply_address = os.getenv("NOREPLY_ADDRESS", "")
+    # Tentativa 1: SendGrid SMTP (apenas se SMTP habilitado)
+    if smtp_enabled:
+        sendgrid_host = os.getenv("SMTP_HOST", "")
+        sendgrid_port = int(os.getenv("SMTP_PORT", "587"))
+        sendgrid_user = os.getenv("SMTP_USER", "")
+        sendgrid_password = os.getenv("SMTP_PASSWORD", "")
+        noreply_address = os.getenv("NOREPLY_ADDRESS", "")
+        
+        if all([sendgrid_host, sendgrid_port, sendgrid_user, sendgrid_password, noreply_address]):
+            try:
+                mailer = EmailSender(host=sendgrid_host, port=sendgrid_port, username=sendgrid_user, password=sendgrid_password, default_from=noreply_address)
+            except Exception as e:
+                logging.warning(f"SendGrid SMTP falhou: {e}")
+                mailer = None
     
-    if all([sendgrid_host, sendgrid_port, sendgrid_user, sendgrid_password, noreply_address]):
-        try:
-            mailer = EmailSender(host=sendgrid_host, port=sendgrid_port, username=sendgrid_user, password=sendgrid_password, default_from=noreply_address)
-        except Exception as e:
-            logging.warning(f"SendGrid SMTP falhou: {e}")
-            mailer = None
-    
-    # Tentativa 2: Gmail SMTP (fallback)
-    if mailer is None:
+    # Tentativa 2: Gmail SMTP (fallback) - apenas se SMTP habilitado
+    if smtp_enabled and mailer is None:
         gmail_host = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
         gmail_port = int(os.getenv("GMAIL_SMTP_PORT", "587"))
         gmail_user = os.getenv("GMAIL_SMTP_USER", "")
@@ -325,7 +328,10 @@ def create_app() -> Flask:
     
     # Modo simulação se ambos falharem
     if mailer is None:
-        logging.warning("Nenhum SMTP configurado - modo simulação ativado")
+        if not smtp_enabled:
+            logging.info("SMTP desabilitado via SMTP_ENABLED=false - modo simulação ativado")
+        else:
+            logging.warning("Nenhum SMTP configurado - modo simulação ativado")
 
     # Configuração de logging
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s: %(message)s')

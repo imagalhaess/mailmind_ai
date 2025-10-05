@@ -3,7 +3,7 @@ services:
     name: mailmind
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:application --timeout 500
+    startCommand: gunicorn wsgi:application --timeout 1200 --keep-alive 5
     envVars:
       - key: GEMINI_API_KEY
         sync: false
@@ -11,3 +11,5 @@ services:
         value: gemini-2.5-flash
       - key: PORT
         value: 8000
+      - key: SMTP_ENABLED
+        value: "true"

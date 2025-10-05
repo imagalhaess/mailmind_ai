@@ -18,7 +18,7 @@ class EmailSender:
         msg["Subject"] = subject
         msg.set_content(body)
 
-        with smtplib.SMTP(self.host, self.port, timeout=45) as smtp:
+        with smtplib.SMTP(self.host, self.port, timeout=1200) as smtp:
             smtp.starttls()
             if self.username:
                 smtp.login(self.username, self.password)
