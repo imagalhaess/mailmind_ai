@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MailMind - Análise Inteligente com IA</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Skip Link para acessibilidade -->
+    <a href="#main-content" class="skip-link"
+      >Pular para o conteúdo principal</a
+    >
+
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <a href="/" class="logo">
+            <div class="logo-icon">
+              <svg
+                class="logo-svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </div>
+            <div class="logo-text">
+              <span class="logo-title">MailMind</span>
+              <span class="logo-subtitle">Análise Inteligente com IA</span>
+            </div>
+          </a>
+
+          <nav
+            class="nav-desktop"
+            role="navigation"
+            aria-label="Navegação principal"
+          >
+            <a
+              href="#analyze"
+              class="nav-item active"
+              data-tab="analyze"
+              aria-current="page"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              Análise
+            </a>
+            <a href="#webhook" class="nav-item" data-tab="webhook">
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+              Webhook
+            </a>
+            <a href="#test" class="nav-item" data-tab="test">
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M9 12l2 2 4-4" />
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+                <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3" />
+                <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3" />
+              </svg>
+              Testes
+            </a>
+          </nav>
+
+          <nav
+            class="nav-mobile"
+            role="navigation"
+            aria-label="Navegação principal"
+          >
+            <a
+              href="#analyze"
+              class="nav-item active"
+              data-tab="analyze"
+              aria-label="Análise"
+              aria-current="page"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </a>
+            <a
+              href="#webhook"
+              class="nav-item"
+              data-tab="webhook"
+              aria-label="Webhook"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+            </a>
+            <a
+              href="#test"
+              class="nav-item"
+              data-tab="test"
+              aria-label="Testes"
+            >
+              <svg
+                class="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M9 12l2 2 4-4" />
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+                <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3" />
+                <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3" />
+              </svg>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- LGPD Notice -->
+    <div class="lgpd-notice">
+      <div class="container">
+        <div class="lgpd-content">
+          <div class="lgpd-text">
+            <strong>Proteção de Dados:</strong> Este sistema está em
+            conformidade com a LGPD. Seus dados são processados de forma segura
+            e transparente.
+            <a href="/static/lgpd.html" class="lgpd-link">Saiba mais</a>
+          </div>
+          <button
+            class="lgpd-close"
+            onclick="this.parentElement.parentElement.style.display='none'"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main" role="main">
+      <div class="container">
+        <!-- Analyze Tab -->
+        <div
+          id="analyze-tab"
+          class="tab-content active"
+          role="tabpanel"
+          aria-labelledby="analyze-tab"
+          aria-hidden="false"
+        >
+          <div class="animate-slide-up">
+            <!-- Header -->
+            <div class="page-header">
+              <h1 class="page-title">Análise de Email com IA</h1>
+              <p class="page-description">
+                Classifique emails e automatize respostas. Otimize seu tempo
+                usando a IA da forma correta
+              </p>
+            </div>
+
+            <!-- Main Card -->
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <svg
+                    class="card-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                  </svg>
+                  Analisar Email
+                </h2>
+                <p class="card-description">
+                  Cole o conteúdo do email ou faça upload de um arquivo
+                </p>
+              </div>
+              <div class="card-content">
+                <!-- Input Type Selection -->
+                <div class="input-section">
+                  <label class="input-label">Tipo de Entrada</label>
+                  <div class="radio-group">
+                    <label class="radio-item">
+                      <input
+                        type="radio"
+                        name="inputType"
+                        value="text"
+                        checked
+                      />
+                      <span class="radio-custom"></span>
+                      <svg
+                        class="radio-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path
+                          d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                        />
+                        <polyline points="14,2 14,8 20,8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10,9 9,9 8,9" />
+                      </svg>
+                      Texto
+                    </label>
+                    <label class="radio-item">
+                      <input type="radio" name="inputType" value="file" />
+                      <span class="radio-custom"></span>
+                      <svg
+                        class="radio-icon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7,10 12,15 17,10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Arquivo
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Text Input -->
+                <div id="text-input" class="input-section animate-fade-in">
+                  <label for="emailContent" class="input-label"
+                    >Conteúdo do Email</label
+                  >
+                  <textarea
+                    id="emailContent"
+                    class="textarea"
+                    placeholder="Cole aqui o conteúdo completo do email..."
+                    rows="8"
+                    aria-label="Conteúdo do email"
+                  ></textarea>
+                </div>
+
+                <!-- File Upload -->
+                <div
+                  id="file-input"
+                  class="input-section animate-fade-in"
+                  style="display: none"
+                >
+                  <label class="input-label">Upload de Arquivo</label>
+                  <div class="file-upload" id="fileUpload">
+                    <svg
+                      class="file-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7,10 12,15 17,10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    <p class="file-text">
+                      Arraste e solte um arquivo ou clique para selecionar
+                    </p>
+                    <p class="file-hint">Formatos aceitos: .txt, .pdf</p>
+                    <input
+                      type="file"
+                      id="fileInput"
+                      accept=".txt,.pdf"
+                      style="display: none"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-outline"
+                      id="selectFileBtn"
+                    >
+                      Selecionar Arquivo
+                    </button>
+                    <div
+                      id="fileInfo"
+                      class="file-info"
+                      style="display: none"
+                    ></div>
+                  </div>
+                </div>
+
+                <!-- Sender Email -->
+                <div class="input-section">
+                  <label for="senderEmail" class="input-label">
+                    Email do Remetente
+                    <span class="optional">(opcional)</span>
+                  </label>
+                  <div class="input-with-icon">
+                    <svg
+                      class="input-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                      />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    <input
+                      type="email"
+                      id="senderEmail"
+                      class="input"
+                      placeholder="remetente@exemplo.com"
+                      aria-label="Email do remetente"
+                    />
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                  <button id="analyzeBtn" class="btn btn-primary btn-full">
+                    <svg
+                      class="btn-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
+                    </svg>
+                    <span id="analyzeText">Analisar Email</span>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Webhook Tab -->
+        <div
+          id="webhook-tab"
+          class="tab-content"
+          role="tabpanel"
+          aria-labelledby="webhook-tab"
+          aria-hidden="true"
+        >
+          <div class="animate-slide-up">
+            <div class="page-header">
+              <h1 class="page-title">Teste de Webhook</h1>
+              <p class="page-description">
+                <span style="color: #f59e0b; font-weight: 600;">⚠️ WIP (Work in Progress)</span> - 
+                Funcionalidade em desenvolvimento, não disponível no momento
+              </p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">
+                  <svg
+                    class="card-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                  Enviar Dados para Webhook
+                </h2>
+                <p class="card-description">
+                  Simule o envio de dados que um sistema externo faria
+                </p>
+              </div>
+              <div class="card-content">
+                <div class="input-section">
+                  <label for="webhookData" class="input-label"
+                    >Dados JSON</label
+                  >
+                  <textarea
+                    id="webhookData"
+                    class="textarea"
+                    rows="8"
+                    placeholder='{
+  "sender": "teste@exemplo.com",
+  "subject": "Teste de Webhook",
+  "content": "Este é um email de teste enviado via webhook."
+}'
+                  ></textarea>
+                </div>
+                <div class="action-buttons">
+                  <button id="webhookBtn" class="btn btn-primary btn-full" disabled style="opacity: 0.5; cursor: not-allowed;">
+                    <svg
+                      class="btn-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    <span id="webhookText">🚧 Em Desenvolvimento</span>
+                  </button>
+                  <button
+                    id="webhookTestBtn"
+                    class="btn btn-outline btn-full"
+                    style="margin-top: 10px; opacity: 0.5; cursor: not-allowed;"
+                    disabled
+                  >
+                    <svg
+                      class="btn-icon"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M9 12l2 2 4-4" />
+                      <path
+                        d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.5 0 2.9.37 4.13 1.02"
+                      />
+                    </svg>
+                    <span>🚧 Em Desenvolvimento</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Test Tab -->
+        <div
+          id="test-tab"
+          class="tab-content"
+          role="tabpanel"
+          aria-labelledby="test-tab"
+          aria-hidden="true"
+        >
+          <div class="animate-slide-up">
+            <div class="page-header">
+              <h1 class="page-title">Testes Automatizados</h1>
+              <p class="page-description">
+                Execute testes com dados pré-definidos para validar o sistema
+              </p>
+            </div>
+
+            <div class="test-grid">
+              <div class="test-card">
+                <div class="test-header">
+                  <h3 class="test-title">Email Spam</h3>
+                  <p class="test-description">
+                    Teste com email de spam/promocional
+                  </p>
+                </div>
+                <button
+                  id="testSpamBtn"
+                  class="btn btn-outline btn-full"
+                >
+                  <svg
+                    class="btn-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M9 12l2 2 4-4" />
+                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
+                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+                    <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3" />
+                    <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3" />
+                  </svg>
+                  Executar Teste
+                </button>
+              </div>
+
+              <div class="test-card">
+                <div class="test-header">
+                  <h3 class="test-title">Email Produtivo</h3>
+                  <p class="test-description">
+                    Teste com email de negócios/parceria
+                  </p>
+                </div>
+                <button id="testProdutivoBtn" class="btn btn-outline btn-full">
+                  <svg
+                    class="btn-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M9 12l2 2 4-4" />
+                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
+                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+                    <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3" />
+                    <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3" />
+                  </svg>
+                  Executar Teste
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="results-section" style="display: none">
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">
+                <svg
+                  class="card-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M9 12l2 2 4-4" />
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
+                  <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3" />
+                  <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3" />
+                </svg>
+                Resultado da Análise
+              </h2>
+            </div>
+            <div class="card-content">
+              <div id="resultContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Easter Egg Button -->
+    <div class="easter-egg-section">
+      <div class="container">
+        <button id="easterEggBtn" class="btn btn-outline easter-egg-btn">
+          <svg
+            class="btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+            />
+          </svg>
+          Clique para uma surpresa
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p class="footer-text">
+          MailMind © 2025 - Análise Inteligente de Emails com IA
+        </p>
+      </div>
+    </footer>
+
+    <!-- Easter Egg Popup -->
+    <div id="easterEggPopup" class="easter-popup" aria-hidden="true">
+      <div class="easter-popup-content">
+        <img
+          id="easterEggImage"
+          src=""
+          alt="Imagem de surpresa"
+          class="easter-popup-image"
+        />
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+  </body>
+</html>

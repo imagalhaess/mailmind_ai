@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+dist
+build
+.venv
+venv
+ENV
+env
+
+# IDE
+.vscode
+.idea
+.cursor
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+
+# Tests
+.pytest_cache
+.coverage
+htmlcov
+*.cover
+
+# Docs
+docs/
+*.md
+!README.md
+
+# Analysis files
+analise_*.md
+relatorio_*.md
+
+# Local env
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Temporary
+*.tmp
+*.temp
+.cache
+
+# CI/CD
+.github/

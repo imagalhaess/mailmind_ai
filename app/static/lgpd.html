@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Política de Privacidade - MailMind</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Skip Link para acessibilidade -->
+    <a href="#main-content" class="skip-link"
+      >Pular para o conteúdo principal</a
+    >
+
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <a href="/" class="logo">
+            <div class="logo-icon">
+              <svg
+                class="logo-svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </div>
+            <div class="logo-text">
+              <span class="logo-title">MailMind</span>
+              <span class="logo-subtitle">Análise Inteligente com IA</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main lgpd-page" role="main">
+      <div class="container">
+        <!-- Botão de Voltar -->
+        <button
+          onclick="history.back()"
+          class="btn btn-back"
+          aria-label="Voltar para a página anterior"
+        >
+          <svg
+            class="btn-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Voltar
+        </button>
+
+        <!-- Header da Página -->
+        <div class="page-header">
+          <h1 class="page-title">Política de Privacidade</h1>
+          <p class="page-description">
+            Conformidade com a Lei Geral de Proteção de Dados (LGPD) do Brasil
+          </p>
+        </div>
+
+        <!-- Informações Básicas -->
+        <div class="lgpd-section">
+          <h2>Como Usamos Seus Dados</h2>
+          <p>
+            Este sistema processa emails para análise com IA. Coletamos apenas o
+            <strong>conteúdo dos emails</strong> e
+            <strong>endereços de remetentes</strong>
+            para classificar e gerar respostas automáticas quando necessário.
+          </p>
+          <div class="lgpd-highlight">
+            <p>
+              <strong>Não compartilhamos</strong> seus dados com terceiros.
+              Dados são processados em tempo real e não armazenados
+              permanentemente.
+            </p>
+          </div>
+        </div>
+
+        <!-- Direitos dos Titulares -->
+        <div class="lgpd-section">
+          <h2>Seus Direitos</h2>
+          <p>
+            Você pode solicitar acesso, correção, exclusão ou portabilidade dos
+            seus dados. Para exercer qualquer direito, entre em contato nos
+            canais de comunicação oficiais da empresa.
+          </p>
+        </div>
+
+        <!-- Consentimento -->
+        <div class="lgpd-section">
+          <h2>Consentimento</h2>
+          <p>
+            Ao utilizar este sistema, você concorda com o processamento de seus
+            dados para análise de emails e geração de respostas automáticas
+            quando necessário.
+          </p>
+        </div>
+
+        <!-- Footer da Página -->
+        <div class="lgpd-footer">
+          <p>Última atualização: 03/10/2025</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p class="footer-text">
+          MailMind © 2025 - Análise Inteligente de Emails com IA
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Melhorar acessibilidade do botão de voltar
+      document
+        .querySelector(".btn-back")
+        .addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            history.back();
+          }
+        });
+
+      // Adicionar suporte a navegação por teclado
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+          history.back();
+        }
+      });
+    </script>
+  </body>
+</html>
