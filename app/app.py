@@ -3,7 +3,7 @@ import os
 import json
 import logging
 import re # Movido para o topo, pois era usado dentro de funções
-from typing import Tuple, Any, List
+from typing import Tuple, Any, List, Optional
 from flask import Flask, request, jsonify, send_from_directory, flash, redirect, url_for
 from dotenv import load_dotenv
 import PyPDF2
@@ -201,6 +201,27 @@ def split_multiple_emails(content: str) -> list:
 
     # Filtra emails vazios e limpa
     return [email.strip() for email in emails if email.strip()]
+
+
+def get_mock_email_data() -> dict:
+    """Retorna dados mock para testes da interface."""
+    return {
+        "spam": {
+            "sender": "spam@exemplo.com",
+            "subject": "Ganhe dinheiro fácil!",
+            "content": "Você foi selecionado para ganhar R$ 10.000! Clique aqui agora!"
+        },
+        "produtivo": {
+            "sender": "cliente@empresa.com", 
+            "subject": "Proposta de parceria comercial",
+            "content": "Gostaríamos de discutir uma possível parceria entre nossas empresas."
+        },
+        "reclamacao": {
+            "sender": "usuario@cliente.com",
+            "subject": "Problema com o produto",
+            "content": "Estou com dificuldades para usar o produto que comprei."
+        }
+    }
 
 
 def analyze_batch_emails(emails: list, service: EmailAnalyzerService, mailer: Optional[EmailSender], config: Any) -> list:
