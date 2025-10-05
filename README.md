@@ -157,5 +157,7 @@ mailmind_ai/
 
 ## Licença
 
-Este projeto foi desenvolvido por Isabela Mattos e refatorado pela Manus AI. Agradecimentos especiais à comunidade de código aberto.
+Este projeto foi desenvolvido por Isabela Mattos como parte de um case de desenvolvimento técnico.
+Foram utilizados todos os meios de pesquisa disponíveis.
+Agradecimentos especiais à comunidade de código aberto.
 
