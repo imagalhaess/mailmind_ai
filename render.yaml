@@ -3,7 +3,7 @@ services:
     name: mailmind
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --timeout 500
+    startCommand: gunicorn app:create_app() --timeout 500
     envVars:
       - key: GEMINI_API_KEY
         sync: false
