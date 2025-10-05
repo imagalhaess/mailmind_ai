@@ -16,9 +16,9 @@ class GeminiClient:
     timeout: int = 600  # 10 minutos de timeout máximo
 
     def __post_init__(self) -> None:
-        genai.configure(api_key=self.api_key)
         # Configura timeout global para requests
         import google.generativeai as genai
+        genai.configure(api_key=self.api_key)
         if hasattr(genai, 'configure'):
             # Configura timeout para todas as requisições
             import urllib3
