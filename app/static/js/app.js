@@ -33,95 +33,158 @@ class EmailAnalyzer {
     });
 
     // Analyze button
-    document.getElementById("analyzeBtn").addEventListener("click", () => {
-      this.handleAnalyze();
-    });
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    if (analyzeBtn) {
+      analyzeBtn.addEventListener("click", () => {
+        this.handleAnalyze();
+      });
+    } else {
+      console.error("Botão analyzeBtn não encontrado!");
+    }
 
-    // Test buttons
-    document.getElementById("testSpamBtn").addEventListener("click", () => {
-      this.handleTest("improdutivo");
-    });
+    // Test buttons - verificação segura
+    const testSpamBtn = document.getElementById("testSpamBtn");
+    const testProductiveBtn = document.getElementById("testProductiveBtn");
+    
+    console.log("Test buttons found:", { testSpamBtn, testProductiveBtn });
+    
+    if (testSpamBtn) {
+      testSpamBtn.addEventListener("click", () => {
+        console.log("Botão spam clicado!");
+        this.handleTest("spam");
+      });
+    } else {
+      console.error("Botão testSpamBtn não encontrado!");
+    }
 
-    document
-      .getElementById("testProductiveBtn")
-      .addEventListener("click", () => {
+    if (testProductiveBtn) {
+      testProductiveBtn.addEventListener("click", () => {
+        console.log("Botão produtivo clicado!");
         this.handleTest("produtivo");
       });
+    } else {
+      console.error("Botão testProductiveBtn não encontrado!");
+    }
 
     // Webhook button
-    document.getElementById("webhookBtn").addEventListener("click", () => {
-      this.handleWebhook();
-    });
+    const webhookBtn = document.getElementById("webhookBtn");
+    if (webhookBtn) {
+      webhookBtn.addEventListener("click", () => {
+        this.handleWebhook();
+      });
+    } else {
+      console.error("Botão webhookBtn não encontrado!");
+    }
 
     // Webhook test button
-    document.getElementById("webhookTestBtn").addEventListener("click", () => {
-      this.loadTestWebhookData();
-    });
-
-    // Test tab buttons
-    document
-      .getElementById("testImprodutivoBtn")
-      .addEventListener("click", () => {
-        this.handleTest("improdutivo");
+    const webhookTestBtn = document.getElementById("webhookTestBtn");
+    if (webhookTestBtn) {
+      webhookTestBtn.addEventListener("click", () => {
+        this.loadTestWebhookData();
       });
+    } else {
+      console.error("Botão webhookTestBtn não encontrado!");
+    }
 
-    document
-      .getElementById("testProdutivoBtn")
-      .addEventListener("click", () => {
+    // Test tab buttons - verificação segura
+    const testImprodutivoBtn = document.getElementById("testImprodutivoBtn");
+    const testProdutivoBtn = document.getElementById("testProdutivoBtn");
+    
+    console.log("Test tab buttons found:", { testImprodutivoBtn, testProdutivoBtn });
+    
+    if (testImprodutivoBtn) {
+      testImprodutivoBtn.addEventListener("click", () => {
+        console.log("Botão improdutivo clicado!");
+        this.handleTest("spam");
+      });
+    } else {
+      console.error("Botão testImprodutivoBtn não encontrado!");
+    }
+
+    if (testProdutivoBtn) {
+      testProdutivoBtn.addEventListener("click", () => {
+        console.log("Botão produtivo clicado!");
         this.handleTest("produtivo");
       });
+    } else {
+      console.error("Botão testProdutivoBtn não encontrado!");
+    }
   }
 
   setupFileUpload() {
-    const fileUpload = document.getElementById("fileUpload");
-    const fileInput = document.getElementById("fileInput");
-    const fileInfo = document.getElementById("fileInfo");
-    const selectFileBtn = document.getElementById("selectFileBtn");
+    // Aguarda um pouco para garantir que o DOM esteja totalmente carregado
+    setTimeout(() => {
+      const fileUpload = document.getElementById("fileUpload");
+      const fileInput = document.getElementById("fileInput");
+      const fileInfo = document.getElementById("fileInfo");
+      const selectFileBtn = document.getElementById("selectFileBtn");
 
-    // Drag and drop
-    fileUpload.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      fileUpload.classList.add("dragging");
-    });
-
-    fileUpload.addEventListener("dragleave", () => {
-      fileUpload.classList.remove("dragging");
-    });
-
-    fileUpload.addEventListener("drop", (e) => {
-      e.preventDefault();
-      fileUpload.classList.remove("dragging");
-
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        this.handleFileSelect(files[0]);
+      // Debug: verificar se elementos existem
+      console.log("File upload elements:", { fileUpload, fileInput, fileInfo, selectFileBtn });
+      
+      if (!fileUpload || !fileInput || !selectFileBtn) {
+        console.error("Elementos de upload não encontrados!");
+        return;
       }
-    });
 
-    // File input change
-    fileInput.addEventListener("change", (e) => {
-      if (e.target.files.length > 0) {
-        this.handleFileSelect(e.target.files[0]);
-      }
-    });
+      // Drag and drop
+      fileUpload.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        fileUpload.classList.add("dragging");
+      });
 
-    // Click to select file - apenas na área de drop, não no botão
-    fileUpload.addEventListener("click", (e) => {
-      // Evita conflito com o botão
-      if (
-        e.target === fileUpload ||
-        e.target.classList.contains("file-text") ||
-        e.target.classList.contains("file-hint")
-      ) {
-        fileInput.click();
-      }
-    });
+      fileUpload.addEventListener("dragleave", () => {
+        fileUpload.classList.remove("dragging");
+      });
 
-    // Botão separado para seleção
-    selectFileBtn.addEventListener("click", (e) => {
-      e.stopPropagation(); // Evita propagação para o fileUpload
-      fileInput.click();
-    });
+      fileUpload.addEventListener("drop", (e) => {
+        e.preventDefault();
+        fileUpload.classList.remove("dragging");
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          this.handleFileSelect(files[0]);
+        }
+      });
+
+      // File input change
+      fileInput.addEventListener("change", (e) => {
+        console.log("Arquivo selecionado:", e.target.files);
+        if (e.target.files.length > 0) {
+          this.handleFileSelect(e.target.files[0]);
+        }
+      });
+
+      // Click to select file - apenas na área de drop, não no botão
+      fileUpload.addEventListener("click", (e) => {
+        // Evita conflito com o botão
+        if (
+          e.target === fileUpload ||
+          e.target.classList.contains("file-text") ||
+          e.target.classList.contains("file-hint")
+        ) {
+          console.log("Área de upload clicada, abrindo seletor...");
+          fileInput.click();
+        }
+      });
+
+      // Botão separado para seleção - versão mais robusta
+      selectFileBtn.addEventListener("click", (e) => {
+        console.log("Botão selecionar arquivo clicado!");
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Força o clique no input de arquivo
+        try {
+          fileInput.click();
+          console.log("Seletor de arquivo aberto com sucesso!");
+        } catch (error) {
+          console.error("Erro ao abrir seletor de arquivo:", error);
+        }
+      });
+
+      console.log("File upload setup concluído!");
+    }, 100);
   }
 
   setupTabs() {
@@ -237,15 +300,26 @@ class EmailAnalyzer {
   }
 
   async handleTest(testType) {
+    console.log(`Iniciando teste: ${testType}`);
+    
     const testBtn = document.querySelector(
       `#test${testType.charAt(0).toUpperCase() + testType.slice(1)}Btn`
     );
+    
+    if (!testBtn) {
+      console.error(`Botão de teste não encontrado para: ${testType}`);
+      this.showToast("Erro: Botão de teste não encontrado", "error");
+      return;
+    }
+    
     const testText = testBtn.querySelector("span") || testBtn;
 
     this.setLoading(testBtn, testText, "Executando...");
 
     try {
+      console.log(`Fazendo requisição para /test/${testType}`);
       const result = await this.runTest(testType);
+      console.log("Resultado do teste:", result);
       this.showResult(result);
       this.showToast(`Teste de email ${testType} executado!`, "success");
     } catch (error) {
@@ -693,5 +767,9 @@ class EmailAnalyzer {
 
 // Initialize the application when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-  new EmailAnalyzer();
+  console.log("DOM carregado, inicializando EmailAnalyzer...");
+  // Pequeno delay para garantir que todos os elementos estejam carregados
+  setTimeout(() => {
+    new EmailAnalyzer();
+  }, 100);
 });

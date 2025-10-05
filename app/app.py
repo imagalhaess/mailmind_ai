@@ -142,7 +142,7 @@ def split_multiple_emails(content: str) -> list:
     else:
         # Se não houver divisão, é um único email
         emails = [content]
-
+    
     # Filtra emails vazios e limpa
     return [email.strip() for email in emails if email.strip()]
 
@@ -190,18 +190,18 @@ def create_app() -> Flask:
     
     # Tentativa 1: SendGrid SMTP (apenas se SMTP habilitado)
     if smtp_enabled:
-        sendgrid_host = os.getenv("SMTP_HOST", "")
-        sendgrid_port = int(os.getenv("SMTP_PORT", "587"))
-        sendgrid_user = os.getenv("SMTP_USER", "")
-        sendgrid_password = os.getenv("SMTP_PASSWORD", "")
-        noreply_address = os.getenv("NOREPLY_ADDRESS", "")
-        
-        if all([sendgrid_host, sendgrid_port, sendgrid_user, sendgrid_password, noreply_address]):
-            try:
+    sendgrid_host = os.getenv("SMTP_HOST", "")
+    sendgrid_port = int(os.getenv("SMTP_PORT", "587"))
+    sendgrid_user = os.getenv("SMTP_USER", "")
+    sendgrid_password = os.getenv("SMTP_PASSWORD", "")
+    noreply_address = os.getenv("NOREPLY_ADDRESS", "")
+    
+    if all([sendgrid_host, sendgrid_port, sendgrid_user, sendgrid_password, noreply_address]):
+        try:
                 mailer = EmailSender(host=sendgrid_host, port=sendgrid_port, username=sendgrid_user, password=sendgrid_password, default_from=noreply_address)
-            except Exception as e:
+        except Exception as e:
                 logging.warning(f"SendGrid SMTP falhou: {e}")
-                mailer = None
+            mailer = None
     
     # Tentativa 2: Gmail SMTP (fallback) - apenas se SMTP habilitado
     if smtp_enabled and mailer is None:
@@ -233,7 +233,7 @@ def create_app() -> Flask:
     app.secret_key = os.getenv("APP_SECRET", "dev-secret")
 
     # --- Rotas Principais ---
-    
+
     @app.route("/", methods=["GET"]) 
     def index():
         return send_from_directory('static', 'index.html')
@@ -252,7 +252,7 @@ def create_app() -> Flask:
                 email_content = request.form.get('email_content', '')
                 sender = request.form.get('sender', '')
                 subject = request.form.get('subject', '')
-
+                
             # Constrói o email no formato padrão para extração de remetente
             formatted_email = f"""From: {sender}\nSubject: {subject}\n\n{email_content}"""
             
@@ -260,15 +260,15 @@ def create_app() -> Flask:
                 return jsonify({"error": "Email content is required"}), 400
             
             # Análise individual do email
-            preprocessed = basic_preprocess(formatted_email)
-            result = service.analyze(preprocessed)
-            
+                preprocessed = basic_preprocess(formatted_email)
+                result = service.analyze(preprocessed)
+                
             if not result or 'categoria' not in result:
                 return jsonify({"status": "error", "message": "Falha na análise do Gemini"}), 500
             
-            categoria = result.get("categoria", "N/A")
+                categoria = result.get("categoria", "N/A")
             atencao = result.get("atencao_humana", "NÃO")
-            resumo = result.get("resumo", "N/A")
+                resumo = result.get("resumo", "N/A")
             sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
             
             # Ações automáticas (implementação futura)
@@ -276,20 +276,20 @@ def create_app() -> Flask:
                 acao = "📧 [FUTURO] Será encaminhado para curadoria humana"
             elif categoria.lower() == "spam":
                 acao = "🚫 Spam detectado - nenhuma ação necessária"
-            else:
+                    else:
                 acao = "🤖 [FUTURO] Resposta automática será implementada"
             
             return jsonify({
-                "status": "success",
+                    "status": "success",
                 "message": "Email analisado via webhook",
-                "result": {
-                    "categoria": categoria,
-                    "atencao_humana": atencao,
-                    "resumo": resumo,
-                    "sugestao": sugestao,
+                    "result": {
+                        "categoria": categoria,
+                        "atencao_humana": atencao,
+                        "resumo": resumo,
+                        "sugestao": sugestao,
                     "acao": acao,
                     "sender": sender
-                }
+                    }
             })
                 
         except Exception as e:
@@ -367,17 +367,17 @@ def create_app() -> Flask:
             # Análise individual - email único
             try:
                 sender = extract_sender_from_email(raw_text) or 'Não identificado'
-                preprocessed = basic_preprocess(raw_text)
+            preprocessed = basic_preprocess(raw_text)
                 result = service.analyze(preprocessed)
-                
-                # Verifica se a análise foi bem-sucedida
-                if not result or 'categoria' not in result:
+            
+            # Verifica se a análise foi bem-sucedida
+            if not result or 'categoria' not in result:
                     raise Exception("Falha na análise do Gemini")
                 
                 # Determina categoria e ação
-                categoria = result.get("categoria", "N/A")
+            categoria = result.get("categoria", "N/A")
                 atencao = result.get("atencao_humana", "NÃO")
-                resumo = result.get("resumo", "N/A")
+            resumo = result.get("resumo", "N/A")
                 sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
                 
                 # Ações automáticas (implementação futura)
@@ -387,12 +387,12 @@ def create_app() -> Flask:
                     acao = "🚫 Spam detectado - nenhuma ação necessária"
                 else:
                     acao = "🤖 [FUTURO] Resposta automática será implementada"
-                
-                return jsonify({
-                    "categoria": categoria,
-                    "atencao_humana": atencao,
-                    "resumo": resumo,
-                    "sugestao": sugestao,
+
+            return jsonify({
+                "categoria": categoria,
+                "atencao_humana": atencao,
+                "resumo": resumo,
+                "sugestao": sugestao,
                     "acao": acao,
                     "sender": sender
                 })
@@ -473,7 +473,7 @@ def create_app() -> Flask:
             'message': 'MailMind está funcionando corretamente',
             'version': '1.0.0'
         })
-    
+
     @app.route('/mock_data')
     def mock_data():
         """Endpoint para retornar dados mock para testes de UI"""
