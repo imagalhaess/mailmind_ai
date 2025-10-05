@@ -430,8 +430,119 @@ def create_app() -> Flask:
         # POST - Simula chamada do webhook, reutilizando webhook_email
         return webhook_email()
 
-    # Rota analyze removida pois a lógica foi consolidada em webhook/test e test_mock
-    # analyze() -> analyze_batch_emails -> webhook_email
+    @app.route("/analyze", methods=["POST"]) 
+    def analyze():
+        """Rota principal para análise de emails via interface web."""
+        raw_text, origin = read_text_from_upload()
+        if not raw_text:
+            if origin == "file_too_large":
+                return jsonify({"error": "Arquivo muito grande. Limite de 2MB."}), 400
+            return jsonify({"error": "Envie um arquivo .txt/.pdf ou cole o texto do e-mail."}), 400
+
+        # Detecta se há múltiplos emails no arquivo
+        emails = split_multiple_emails(raw_text)
+        
+        if len(emails) > 1:
+            # Análise em lote - múltiplos emails
+            results = analyze_batch_emails(emails, service, mailer, config)
+            
+            return jsonify({
+                "total_emails": len(emails),
+                "results": results,
+                "message": f"Análise em lote concluída para {len(emails)} emails"
+            })
+        else:
+            # Análise individual - email único
+            try:
+                sender = extract_sender_from_email(raw_text) or 'Não identificado'
+                preprocessed = basic_preprocess(raw_text)
+                result = service.analyze(preprocessed)
+                
+                # Verifica se a análise foi bem-sucedida
+                if not result or 'categoria' not in result:
+                    raise Exception("Falha na análise do Gemini")
+                
+                # Determina ação
+                categoria = result.get("categoria", "N/A")
+                atencao = result.get("atencao_humana", "NÃO")
+                resumo = result.get("resumo", "N/A")
+                sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+                
+                action_result = ""
+                
+                if atencao.upper() == "NÃO":
+                    # Verifica se é spam - spam NÃO deve receber resposta automática
+                    if categoria.lower() == "spam":
+                        action_result = " Nenhuma resposta automática foi enviada (spam detectado)"
+                    else:
+                        # Para outros emails IMPRODUTIVOS: responder automaticamente para o REMETENTE ORIGINAL
+                        if sender != 'Não identificado':
+                            # Gerar resposta automática personalizada usando IA
+                            response_body = generate_automatic_response(sugestao, categoria, raw_text)
+                            
+                            if mailer:
+                                try:
+                                    mailer.send(
+                                        to_address=sender,
+                                        subject="Resposta automática - MailMind",
+                                        body=response_body,
+                                    )
+                                    action_result = f" Resposta automática ENVIADA para o REMETENTE ({sender})"
+                                except Exception as e:
+                                    logging.warning(f"Falha no envio principal: {e}")
+                                    action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender}):\n\n{response_body}"
+                            else:
+                                action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender}):\n\n{response_body}"
+                        else:
+                            action_result = f" Email do remetente não identificado - não foi possível enviar resposta automática"
+                elif atencao.upper() == "SIM":
+                    # Para emails PRODUTIVOS: encaminhar para curadoria humana
+                    if config.curator_address:
+                        forward_body = f"""Email recebido para curadoria humana:
+
+REMETENTE: {sender}
+CATEGORIA: {categoria}
+RESUMO: {resumo}
+SUGESTÃO/AÇÃO: {sugestao}
+
+--- CONTEÚDO ORIGINAL ---
+{raw_text[:500]}...
+
+Este email foi automaticamente encaminhado pelo sistema MailMind."""
+                        
+                        if mailer:
+                            try:
+                                mailer.send(
+                                    to_address=config.curator_address,
+                                    subject=f"Encaminhamento para curadoria - {categoria}",
+                                    body=forward_body,
+                                )
+                                action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
+                            except Exception as e:
+                                logging.warning(f"Falha no envio principal: {e}")
+                                action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
+                        else:
+                            action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address}):\n\n{forward_body}"
+                    else:
+                        action_result = f" Email produtivo detectado - curador não configurado"
+                
+                return jsonify({
+                    "categoria": categoria,
+                    "atencao_humana": atencao,
+                    "resumo": resumo,
+                    "sugestao": sugestao,
+                    "acao": action_result,
+                    "sender": sender
+                })
+                
+            except Exception as e:
+                action_result = f" Falha ao enviar e-mail: {e}"
+                logging.error(f"Erro no envio de email: {e}")
+
+                return jsonify({
+                    "error": "Erro interno do servidor",
+                    "details": str(e)
+                }), 500
 
     @app.route("/test/<test_type>")
     def test_mock(test_type):
