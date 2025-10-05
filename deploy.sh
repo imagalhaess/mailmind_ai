@@ -75,7 +75,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --max-instances 10 \
     --min-instances 0 \
     --timeout 300 \
-    --set-env-vars ENVIRONMENT=production,PORT=8080 \
+    --set-env-vars ENVIRONMENT=production \
     --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest \
     --project=${PROJECT_ID}
 
