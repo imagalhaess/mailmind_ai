@@ -18,7 +18,7 @@ class EmailAnalyzerService:
 
 {{
   "atencao_humana": "SIM" ou "NÃO",
-  "categoria": "spam/produtivo/reclamacao/outro",
+  "categoria": "Spam/Produtivo/Reclamacao/Outro",
   "resumo": "resumo curto",
   "sugestao_resposta_ou_acao": "acao sugerida"
 }}

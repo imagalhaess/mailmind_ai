@@ -5,13 +5,18 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 ## Funcionalidades
 
 ### ✅ Implementado
+
 - **Classificação Automática**: Categoriza e-mails como Produtivo ou Improdutivo
 - **Análise com IA**: Usa Google Gemini para resumir e sugerir ações
 - **Interface Web**: Upload de arquivos (.txt/.pdf) ou entrada de texto (limite: 2MB)
-- **API Webhook**: Integração com sistemas externos
-- **Testes Integrados**: Botões para testar diferentes cenários
+- **Testes Integrados**: Botões para testar diferentes cenários com dados mockados
+
+### 🚧 Em Desenvolvimento (WIP)
+
+- **API Webhook**: Integração com sistemas externos (funcionalidade em desenvolvimento)
 
 ### 🔮 Implementação Futura
+
 - **Respostas Automáticas**: Envio de respostas para e-mails improdutivos
 - **Encaminhamento**: Direcionamento automático para curadoria humana
 - **Processamento Assíncrono**: Background processing para melhor performance

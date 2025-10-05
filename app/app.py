@@ -409,74 +409,51 @@ def create_app() -> Flask:
     def test_mock(test_type):
         """Rota para testar com dados mock."""
         try:
-            mock_data = get_mock_email_data()
-            
-            # Mapear nomes dos botões para as chaves dos dados
-            test_mapping = {
-                "spam": "spam",
-                "produtivo": "produtivo", 
-                "reclamacao": "reclamacao"
+            # Dados mockados fixos para evitar problemas com Gemini
+            mock_results = {
+                "spam": {
+                    "categoria": "Spam",
+                    "atencao_humana": "NÃO",
+                    "resumo": "Email promocional com ofertas suspeitas",
+                    "sugestao_resposta_ou_acao": "Marcar como spam e ignorar",
+                    "sender": "spam@exemplo.com",
+                    "acao": "🚫 Spam detectado - nenhuma ação necessária"
+                },
+                "produtivo": {
+                    "categoria": "Produtivo",
+                    "atencao_humana": "SIM",
+                    "resumo": "Proposta de parceria comercial legítima",
+                    "sugestao_resposta_ou_acao": "Responder com interesse e agendar reunião",
+                    "sender": "cliente@empresa.com",
+                    "acao": "📧 [FUTURO] Será encaminhado para curadoria humana"
+                },
+                "reclamacao": {
+                    "categoria": "Reclamacao",
+                    "atencao_humana": "SIM",
+                    "resumo": "Reclamação sobre produto com problema técnico",
+                    "sugestao_resposta_ou_acao": "Investigar problema e oferecer solução",
+                    "sender": "usuario@cliente.com",
+                    "acao": "📧 [FUTURO] Será encaminhado para curadoria humana"
+                }
             }
             
-            if test_type not in test_mapping:
+            if test_type not in mock_results:
                 return jsonify({
-                    "error": f"❌ Tipo de teste inválido. Use: {', '.join(test_mapping.keys())}",
-                    "available_types": list(test_mapping.keys())
+                    "error": f"❌ Tipo de teste inválido. Use: {', '.join(mock_results.keys())}",
+                    "available_types": list(mock_results.keys())
                 }), 400
             
-            data_key = test_mapping[test_type]
-            data = mock_data[data_key]
+            result = mock_results[test_type]
             
-            # Simula o processamento (individual)
-            preprocessed = basic_preprocess(data["content"])
-            result = service.analyze(preprocessed) # Chama o service
-            
-            # Simula as ações automáticas
-            categoria = result.get("categoria", "N/A")
-            atencao = result.get("atencao_humana", "N/A")
-            resumo = result.get("resumo", "N/A")
-            sugestao = result.get("sugestao_resposta_ou_acao", result.get("conteudo", "N/A"))
-            
-            extracted_sender = extract_sender_from_email(data["content"])
-            sender_email = extracted_sender or data["sender"] # Usa o sender do mock se falhar
-
-            # Lógica de ação consolidada
-            action_result = "Nenhuma ação executada"
-            if atencao.upper() == "NÃO":
-                if categoria.lower() != "spam":
-                    response_body = generate_automatic_response(sugestao, categoria, data["content"])
-                    if mailer:
-                        mailer.send(to_address=sender_email, subject="Resposta automática - MailMind", body=response_body)
-                        action_result = f" Resposta automática ENVIADA para o REMETENTE ({sender_email})"
-                    else:
-                        action_result = f" [SIMULAÇÃO] Resposta automática seria enviada para o REMETENTE ({sender_email})"
-            elif atencao.upper() == "SIM":
-                forward_body = f"""Email recebido para curadoria humana:
-
-REMETENTE: {sender_email}
-CATEGORIA: {categoria}
-RESUMO: {resumo}
-SUGESTÃO/AÇÃO: {sugestao}
-
---- CONTEÚDO ORIGINAL ---
-{data['content'][:500]}...
-
-Este email foi automaticamente encaminhado pelo sistema MailMind."""
-                if mailer:
-                    mailer.send(to_address=config.curator_address, subject=f"Encaminhamento para curadoria - {categoria}", body=forward_body)
-                    action_result = f" ENVIADO para CURADORIA HUMANA ({config.curator_address})"
-                else:
-                    action_result = f" [SIMULAÇÃO] Seria encaminhado para CURADORIA HUMANA ({config.curator_address})"
-        
             return jsonify({
-                "categoria": categoria,
-                "atencao_humana": atencao,
-                "resumo": resumo,
-                "sugestao": sugestao,
-                "acao_executada": action_result,
+                "categoria": result["categoria"],
+                "atencao_humana": result["atencao_humana"],
+                "resumo": result["resumo"],
+                "sugestao": result["sugestao_resposta_ou_acao"],
+                "acao": result["acao"],
                 "test_mode": True,
                 "test_type": test_type,
-                "sender_email": sender_email
+                "sender": result["sender"]
             })
             
         except Exception as e:
