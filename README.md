@@ -2,7 +2,7 @@
 
 Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classificar mensagens e automatizar respostas. Otimize seu tempo usando a IA da forma correta.
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
 - **Classificação Automática**: Categoriza e-mails como Produtivo ou Improdutivo
 - **Análise com IA**: Usa Google Gemini para resumir e sugerir ações
@@ -10,13 +10,13 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
 - **Encaminhamento**: Direciona casos complexos para curadoria humana
 - **Interface Web**: Upload de arquivos (.txt/.pdf) ou entrada de texto
 
-## 📋 Pré-requisitos
+## Pré-requisitos
 
 - Python 3.10+
 - Chave de API do Google Gemini
 - Conta SendGrid (opcional, para envio de e-mails/respostas automáticas)
 
-## 🛠️ Instalação
+## Instalação
 
 1. **Clone e configure o ambiente:**
 
@@ -40,7 +40,7 @@ Sistema de análise e curadoria de e-mails usando IA (Google Gemini) para classi
    # Edite .env com suas credenciais
    ```
 
-## ⚙️ Configuração
+## Configuração
 
 ### Obrigatório:
 
@@ -69,38 +69,37 @@ python -m app.app
 python main.py
 ```
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 mailmind/
-├── app.py                    # 🚀 Ponto de entrada principal
-├── main.py                   # 📝 Exemplo CLI (demonstração)
-├── requirements.txt          # 📦 Dependências Python
-├── .env.example             # 🔐 Template de variáveis de ambiente
-├── app/                     # 📁 Código da aplicação
-│   ├── __init__.py          # 📦 Pacote principal
-│   ├── app.py               # 🌐 Aplicação Flask
-│   ├── config.py            # ⚙️ Configurações
-│   ├── providers/           # 🌐 Provedores externos
-│   │   └── gemini_client.py # 🤖 Cliente Google Gemini
-│   ├── services/            # 🧠 Lógica de negócio
-│   │   └── email_analyzer.py # 📊 Serviço de análise
-│   ├── utils/               # 🛠️ Utilitários
-│   │   ├── text_preprocess.py # 📝 Pré-processamento NLP
-│   │   └── email_sender.py  # 📤 Envio de emails
-│   └── static/              # 🎨 Interface web moderna
-│       ├── index.html       # 🏠 Página principal
-│       ├── css/style.css    # 🎨 Estilos modernos
-│       └── js/app.js         # ⚡ JavaScript interativo
-└── docs/                    # 📚 Documentação completa
-    ├── ARCHITECTURE.md       # 🏛️ Arquitetura do sistema
-    ├── BUSINESS_RULES.md     # 📋 Regras de negócio
-    ├── TECHNICAL_DECISIONS.md # 🔧 Decisões técnicas
-    ├── DEVELOPMENT_GUIDE.md  # 👨‍💻 Guia de desenvolvimento
-    ├── PROJECT_STATUS.md     # 📊 Status do projeto
+├── app.py                    #  Ponto de entrada principal
+├── main.py                   #  Exemplo CLI (demonstração)
+├── requirements.txt          #  Dependências Python
+├── .env.example              #  Template de variáveis de ambiente
+├── app/                      #  Código da aplicação
+│   ├── __init__.py           #  Pacote principal
+│   ├── app.py                #  Aplicação Flask
+│   ├── config.py             #  Configurações
+│   ├── providers/            #  Provedores externos
+│   │   └── gemini_client.py  #  Cliente Google Gemini
+│   ├── services/             #  Lógica de negócio
+│   │   └── email_analyzer.py #  Serviço de análise
+│   ├── utils/                #  Utilitários
+│   │   ├── text_preprocess.py #  Pré-processamento NLP
+│   │   └── email_sender.py   #  Envio de emails
+│   └── static/               #  Interface web moderna
+│       ├── index.html        #  Página principal
+│       ├── css/style.css     #  Estilos modernos
+│       └── js/app.js         #  JavaScript interativo
+└── docs/                     #  Documentação completa
+    ├── ARCHITECTURE.md       #  Arquitetura do sistema
+    ├── TECHNICAL_DECISIONS.md #  Decisões técnicas
+    ├── DEVELOPMENT_GUIDE.md  #  Guia de desenvolvimento
+    └── LGPD_COMPLIANCE.md    #  Conformidade LGPD
 ```
 
-## 🧪 Testes
+## Testes
 
 ### Teste Rápido
 
@@ -122,7 +121,7 @@ Consulte **[Guia de Testes](app/tests/TESTING_GUIDE.md)** para instruções deta
 - ✅ Verificação de problemas comuns
 - ✅ **Sistema de fallback**: SendGrid → Gmail SMTP → Simulação
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 O sistema segue princípios de Clean Code:
 
@@ -131,7 +130,7 @@ O sistema segue princípios de Clean Code:
 - **Tratamento de Erros**: Validação robusta e logging
 - **Testabilidade**: Estrutura preparada para testes unitários
 
-## 🚀 Deploy
+## Deploy
 
 Para produção, use um servidor WSGI como Gunicorn:
 
@@ -140,7 +139,7 @@ pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 ```
 
-## 🚀 Próximos Passos
+## Próximos Passos
 
 ### ✅ **Implementado**
 
@@ -153,14 +152,14 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 - [x] Sistema de envio de emails via SMTP/Gmail
 - [x] Webhook básico para integração
 
-### 🔄 **Em Progresso (WIP)**
+### **Em Progresso (WIP)**
 
 - [ ] **Webhook Avançado**: Autenticação, rate limiting, retry logic
 - [ ] **Integração com Email Providers**: Gmail API, Outlook API
 - [ ] **Dashboard Analytics**: Métricas e relatórios
 - [ ] **Machine Learning**: Modelo próprio, fine-tuning
 
-### 📋 **Planejado**
+### **Planejado**
 
 - [ ] Autenticação de usuários
 - [ ] Cache para melhorar performance
@@ -170,14 +169,13 @@ gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 - [ ] Processamento assíncrono (Redis/Celery)
 - [ ] Análise de sentimento avançada
 
-## 📚 Documentação Completa
+## Documentação Completa
 
 - **[Guia de Testes](app/tests/TESTING_GUIDE.md)** - 🧪 Como testar todas as funcionalidades
-- **[Status do Projeto](docs/PROJECT_STATUS.md)** - 📊 O que está funcionando e próximos passos
 - **[Arquitetura](docs/ARCHITECTURE.md)** - 🏛️ Decisões arquiteturais e estrutura do sistema
-- **[Regras de Negócio](docs/BUSINESS_RULES.md)** - 📋 Lógica de classificação e ações automáticas
 - **[Decisões Técnicas](docs/TECHNICAL_DECISIONS.md)** - 🔧 Por que cada tecnologia foi escolhida
 - **[Guia de Desenvolvimento](docs/DEVELOPMENT_GUIDE.md)** - 👨‍💻 Como contribuir e desenvolver
+- **[Conformidade LGPD](docs/LGPD_COMPLIANCE.md)** - 🛡️ Política de privacidade e proteção de dados
 
 ## 📝 Licença
 

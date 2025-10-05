@@ -1,12 +1,12 @@
-# 🔧 Decisões Técnicas - Mail Mind
+# Decisões Técnicas - MailMind
 
-## 📋 Visão Geral
+## Visão Geral
 
-Este documento registra as principais decisões técnicas tomadas durante o desenvolvimento do Email Analyzer, explicando o **porquê** de cada escolha e suas implicações.
+Este documento registra as principais decisões técnicas tomadas durante o desenvolvimento do MailMind, explicando o **porquê** de cada escolha e suas implicações.
 
-## 🤖 **Decisão: Google Gemini vs OpenAI**
+## **Decisão: Google Gemini vs OpenAI**
 
-### ✅ **Escolha**: Google Gemini 2.5 Flash
+### **Escolha**: Google Gemini 2.5 Flash
 
 **Motivação**:
 
@@ -30,9 +30,9 @@ Este documento registra as principais decisões técnicas tomadas durante o dese
 
 ---
 
-## 📧 **Decisão: Sistema de Fallback para Envio de Emails**
+## **Decisão: Sistema de Fallback para Envio de Emails**
 
-### ✅ **Escolha**: SendGrid → Gmail SMTP → Simulação
+### **Escolha**: SendGrid → Gmail SMTP → Simulação
 
 **Motivação**:
 
@@ -95,9 +95,9 @@ GMAIL_SMTP_PASSWORD=xxx
 
 ---
 
-## 🏗️ **Decisão: Flask vs Django vs FastAPI**
+## **Decisão: Flask vs Django vs FastAPI**
 
-### ✅ **Escolha**: Flask
+### **Escolha**: Flask
 
 **Motivação**:
 
@@ -121,9 +121,9 @@ GMAIL_SMTP_PASSWORD=xxx
 
 ---
 
-## 📁 **Decisão: Estrutura de Diretórios**
+## **Decisão: Estrutura de Diretórios**
 
-### ✅ **Escolha**: Separação por Responsabilidade
+### **Escolha**: Separação por Responsabilidade
 
 ```
 providers/    # Provedores externos (Gemini)
@@ -155,9 +155,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🔧 **Decisão: Configuração via .env**
+## **Decisão: Configuração via .env**
 
-### ✅ **Escolha**: Variáveis de Ambiente + python-dotenv
+### **Escolha**: Variáveis de Ambiente + python-dotenv
 
 **Motivação**:
 
@@ -181,9 +181,9 @@ tests/        # Testes unitários
 
 ---
 
-## 📧 **Decisão: SMTP vs SendGrid vs Gmail**
+## **Decisão: SMTP vs SendGrid vs Gmail**
 
-### ✅ **Escolha**: SMTP com Fallback para Gmail
+### **Escolha**: SMTP com Fallback para Gmail
 
 **Motivação**:
 
@@ -208,9 +208,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🧪 **Decisão: Testes Unitários**
+## **Decisão: Testes Unitários**
 
-### ✅ **Escolha**: pytest + Mocking
+### **Escolha**: pytest + Mocking
 
 **Motivação**:
 
@@ -234,9 +234,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🔄 **Decisão: Processamento Síncrono vs Assíncrono**
+## **Decisão: Processamento Síncrono vs Assíncrono**
 
-### ✅ **Escolha**: Processamento Síncrono (MVP)
+### **Escolha**: Processamento Síncrono (MVP)
 
 **Motivação**:
 
@@ -261,9 +261,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🌐 **Decisão: Webhook Simples vs Avançado**
+## **Decisão: Webhook Simples vs Avançado**
 
-### ✅ **Escolha**: Webhook Simples (MVP)
+### **Escolha**: Webhook Simples (MVP)
 
 **Motivação**:
 
@@ -289,9 +289,9 @@ tests/        # Testes unitários
 
 ---
 
-## 📊 **Decisão: Logging Simples vs Estruturado**
+## **Decisão: Logging Simples vs Estruturado**
 
-### ✅ **Escolha**: Logging Simples com python logging
+### **Escolha**: Logging Simples com python logging
 
 **Motivação**:
 
@@ -316,9 +316,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🗄️ **Decisão: Sem Persistência vs Banco de Dados**
+## **Decisão: Sem Persistência vs Banco de Dados**
 
-### ✅ **Escolha**: Sem Persistência (Stateless)
+### **Escolha**: Sem Persistência (Stateless)
 
 **Motivação**:
 
@@ -343,9 +343,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🔒 **Decisão: Segurança Básica vs Avançada**
+## **Decisão: Segurança Básica vs Avançada**
 
-### ✅ **Escolha**: Segurança Básica (MVP)
+### **Escolha**: Segurança Básica (MVP)
 
 **Motivação**:
 
@@ -371,9 +371,9 @@ tests/        # Testes unitários
 
 ---
 
-## 📈 **Decisão: Monitoramento Básico vs Avançado**
+## **Decisão: Monitoramento Básico vs Avançado**
 
-### ✅ **Escolha**: Monitoramento Básico (Logs)
+### **Escolha**: Monitoramento Básico (Logs)
 
 **Motivação**:
 
@@ -398,9 +398,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🚀 **Decisão: Deploy Simples vs Complexo**
+## **Decisão: Deploy Simples vs Complexo**
 
-### ✅ **Escolha**: Deploy Simples (python app.py)
+### **Escolha**: Deploy Simples (python app.py)
 
 **Motivação**:
 
@@ -425,9 +425,9 @@ tests/        # Testes unitários
 
 ---
 
-## 🚫 **Decisão: Lógica de Resposta Automática para Spam**
+## **Decisão: Lógica de Resposta Automática para Spam**
 
-### ✅ **Escolha**: Spam NÃO recebe resposta automática
+### **Escolha**: Spam NÃO recebe resposta automática
 
 **Motivação**:
 
@@ -497,7 +497,7 @@ A lógica foi aplicada em todas as funções de processamento:
 
 ---
 
-## 🔮 **Decisões Futuras Planejadas**
+## **Decisões Futuras Planejadas**
 
 ### **Webhook Avançado**
 
@@ -534,7 +534,7 @@ A lógica foi aplicada em todas as funções de processamento:
 
 ---
 
-## 📝 **Resumo das Decisões**
+## **Resumo das Decisões**
 
 | Aspecto           | Decisão                 | Motivação Principal       |
 | ----------------- | ----------------------- | ------------------------- |
@@ -555,6 +555,6 @@ A lógica foi aplicada em todas as funções de processamento:
 
 ---
 
-**Última atualização**: 03/10/2025  
-**Versão**: 1.1.0  
+**Última atualização**: 03/01/2025  
+**Versão**: 1.0.0  
 **Status**: Documentação completa das decisões técnicas

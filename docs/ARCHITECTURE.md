@@ -1,10 +1,10 @@
-# 🏗️ Arquitetura do Email Analyzer
+#  Arquitetura do MailMind
 
-## 📋 Visão Geral
+##  Visão Geral
 
-O **Email Analyzer** é um sistema inteligente de análise e curadoria de emails que utiliza IA (Google Gemini) para classificar emails como produtivos ou improdutivos e executar ações automáticas baseadas na classificação.
+O **MailMind** é um sistema inteligente de análise e curadoria de emails que utiliza IA (Google Gemini) para classificar emails como produtivos ou improdutivos e executar ações automáticas baseadas na classificação.
 
-## 🎯 Objetivos do Sistema
+##  Objetivos do Sistema
 
 1. **Automatizar** a análise de emails recebidos
 2. **Classificar** emails como produtivos (requerem atenção humana) ou improdutivos (spam/lixo)
@@ -14,7 +14,7 @@ O **Email Analyzer** é um sistema inteligente de análise e curadoria de emails
 4. **Processar em lote** múltiplos emails de um arquivo
 5. **Fornecer webhook** para integração com sistemas externos
 
-## 🏛️ Arquitetura Geral
+##  Arquitetura Geral
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -36,7 +36,7 @@ O **Email Analyzer** é um sistema inteligente de análise e curadoria de emails
             └─────────────┘         └─────────────┘
 ```
 
-## 📧 Sistema de Fallback de Email
+##  Sistema de Fallback de Email
 
 O sistema implementa uma estratégia robusta de fallback para garantir que emails sempre sejam enviados:
 
@@ -65,36 +65,41 @@ Tentar Gmail → Sucesso? → Usar Gmail
 Modo Simulação → Log + Continuar
 ```
 
-## 📁 Estrutura de Diretórios
+##  Estrutura de Diretórios
 
 ```
-email_analyzer/
+mailmind_ai/
 ├── app.py                    # Aplicação Flask principal
 ├── main.py                   # Exemplo CLI (demonstração)
-├── config.py                 # Configurações centralizadas
 ├── requirements.txt          # Dependências Python
 ├── .env.example             # Template de variáveis de ambiente
 ├── README.md                 # Documentação principal
-├── ARCHITECTURE.md           # Este arquivo
-├── BUSINESS_RULES.md         # Regras de negócio
-├── webhook_examples.md       # Exemplos de uso do webhook
-├── providers/                # Provedores externos
-│   └── gemini_client.py     # Cliente Google Gemini
-├── services/                 # Lógica de negócio
-│   └── email_analyzer.py    # Serviço de análise de emails
-├── utils/                    # Utilitários
-│   ├── text_preprocess.py   # Pré-processamento de texto
-│   └── email_sender.py      # Envio de emails
-├── templates/               # Templates HTML
-│   ├── index.html           # Página principal
-│   ├── result.html          # Resultado individual
-│   ├── batch_result.html    # Resultado em lote
-│   └── webhook_test.html    # Teste do webhook
-└── tests/                   # Testes unitários
-    └── test_email_analyzer.py
+├── docs/                     # Documentação completa
+│   ├── ARCHITECTURE.md       # Este arquivo
+│   ├── TECHNICAL_DECISIONS.md # Decisões técnicas
+│   ├── DEVELOPMENT_GUIDE.md  # Guia de desenvolvimento
+│   └── LGPD_COMPLIANCE.md    # Conformidade LGPD
+├── app/                      # Código da aplicação
+│   ├── __init__.py           # Pacote principal
+│   ├── app.py                # Aplicação Flask
+│   ├── config.py             # Configurações centralizadas
+│   ├── providers/            # Provedores externos
+│   │   └── gemini_client.py  # Cliente Google Gemini
+│   ├── services/             # Lógica de negócio
+│   │   └── email_analyzer.py # Serviço de análise de emails
+│   ├── utils/                # Utilitários
+│   │   ├── text_preprocess.py # Pré-processamento de texto
+│   │   └── email_sender.py   # Envio de emails
+│   ├── static/               # Interface web
+│   │   ├── index.html        # Página principal
+│   │   ├── css/style.css     # Estilos
+│   │   └── js/app.js         # JavaScript
+│   └── tests/                # Testes unitários
+│       └── TESTING_GUIDE.md  # Guia de testes
+└── render.yaml               # Configuração de deploy
 ```
 
-## 🔧 Componentes Principais
+##  Componentes Principais
 
 ### 1. **Flask App (app.py)**
 
@@ -136,7 +141,7 @@ email_analyzer/
 - **text_preprocess.py**: Pré-processamento de texto (tokenização, limpeza)
 - **email_sender.py**: Envio de emails via SMTP
 
-## 🔄 Fluxo de Dados
+##  Fluxo de Dados
 
 ### Análise Individual
 
@@ -173,7 +178,7 @@ email_analyzer/
 4. Retorna resultado JSON
 ```
 
-## 🎨 Padrões de Design Utilizados
+##  Padrões de Design Utilizados
 
 ### 1. **Separation of Concerns**
 
@@ -198,7 +203,7 @@ email_analyzer/
 - `EmailAnalyzerService` encapsula regras de negócio
 - Separa lógica de negócio da interface
 
-## 🔒 Segurança
+##  Segurança
 
 ### 1. **Variáveis de Ambiente**
 
@@ -216,7 +221,7 @@ email_analyzer/
 - Logs detalhados para debugging
 - Fallbacks para falhas de API
 
-## 📊 Monitoramento e Logs
+##  Monitoramento e Logs
 
 ### 1. **Logging Estruturado**
 
@@ -230,7 +235,7 @@ email_analyzer/
 - Taxa de sucesso da API Gemini
 - Tempo de resposta das análises
 
-## 🚀 Escalabilidade
+##  Escalabilidade
 
 ### 1. **Processamento Assíncrono** (Futuro)
 
@@ -247,7 +252,7 @@ email_analyzer/
 - Múltiplas instâncias da aplicação
 - Distribuição de carga
 
-## 🔮 Melhorias Futuras
+##  Melhorias Futuras
 
 ### 1. **Webhook Avançado** (WIP)
 
@@ -274,7 +279,7 @@ email_analyzer/
 - Relatórios de classificação
 - Visualização de tendências
 
-## 🧪 Testes
+##  Testes
 
 ### 1. **Testes Unitários**
 
@@ -288,7 +293,7 @@ email_analyzer/
 - Testes de webhook
 - Testes de envio de email
 
-## 📝 Convenções de Código
+##  Convenções de Código
 
 ### 1. **Python**
 
@@ -308,7 +313,7 @@ email_analyzer/
 - Imports organizados (stdlib, third-party, local)
 - Separação clara de responsabilidades
 
-## 🔧 Configuração de Desenvolvimento
+##  Configuração de Desenvolvimento
 
 ### 1. **Ambiente Virtual**
 
@@ -331,7 +336,7 @@ cp .env.example .env
 python app.py
 ```
 
-## 📚 Dependências Principais
+##  Dependências Principais
 
 - **Flask**: Framework web
 - **google-generativeai**: Cliente Google Gemini
@@ -341,6 +346,6 @@ python app.py
 
 ---
 
-**Última atualização**: 02/10/2025  
+**Última atualização**: 03/01/2025  
 **Versão**: 1.0.0  
 **Status**: Produção (com melhorias futuras planejadas)

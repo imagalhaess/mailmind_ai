@@ -1,6 +1,6 @@
-# 👨‍💻 Guia de Desenvolvimento - MailMind
+# Guia de Desenvolvimento - MailMind
 
-## 🚀 Início Rápido
+## Início Rápido
 
 ### 1. **Configuração do Ambiente**
 
@@ -53,38 +53,7 @@ pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:8000 app:create_app()
 ```
 
-## 🏗️ Estrutura do Projeto
-
-```
-email_analyzer/
-├── app.py                    # 🎯 Aplicação Flask principal
-├── main.py                   # 📝 Exemplo CLI (demonstração)
-├── config.py                 # ⚙️ Configurações centralizadas
-├── requirements.txt          # 📦 Dependências Python
-├── .env.example             # 🔐 Template de variáveis
-├── README.md                 # 📖 Documentação principal
-├── ARCHITECTURE.md           # 🏛️ Arquitetura do sistema
-├── BUSINESS_RULES.md         # 📋 Regras de negócio
-├── TECHNICAL_DECISIONS.md    # 🔧 Decisões técnicas
-├── DEVELOPMENT_GUIDE.md      # 👨‍💻 Este arquivo
-├── LGPD_COMPLIANCE.md        # 🛡️ Conformidade LGPD
-├── DEPLOY_GUIDE.md           # 🚀 Guia de Deploy
-├── providers/                # 🌐 Provedores externos
-│   └── gemini_client.py     # 🤖 Cliente Google Gemini
-├── services/                 # 🧠 Lógica de negócio
-│   └── email_analyzer.py    # 📊 Serviço de análise
-├── utils/                    # 🛠️ Utilitários
-│   ├── text_preprocess.py   # 📝 Pré-processamento NLP
-│   └── email_sender.py      # 📤 Envio de emails
-├── static/                  # 🎨 Frontend HTML/CSS/JS
-│   ├── index.html           # 🏠 Página principal
-│   ├── css/style.css        # 🎨 Estilos
-│   └── js/app.js            # ⚡ JavaScript
-└── tests/                   # 🧪 Testes unitários
-    └── __init__.py
-```
-
-## 🔧 Desenvolvimento
+## Desenvolvimento
 
 ### **Convenções de Código**
 
@@ -297,7 +266,7 @@ def processar_email(email: str):
         raise
 ```
 
-## 🔄 Fluxo de Desenvolvimento
+## Fluxo de Desenvolvimento
 
 ### **1. Nova Funcionalidade**
 
@@ -364,7 +333,7 @@ git commit -m "refactor: melhora arquitetura do serviço de análise"
 # 4. Push e PR
 ```
 
-## 🧪 Testes e Qualidade
+## Testes e Qualidade
 
 ### **Tipos de Testes**
 
@@ -438,7 +407,7 @@ bandit -r .                 # Verificar vulnerabilidades
 safety check               # Verificar dependências
 ```
 
-## 🚀 Deploy
+## Deploy
 
 ### **Desenvolvimento**
 
@@ -476,7 +445,7 @@ FLASK_DEBUG=False
 LOG_LEVEL=INFO
 ```
 
-## 📚 Recursos Úteis
+## Recursos Úteis
 
 ### **Documentação**
 
@@ -497,7 +466,7 @@ LOG_LEVEL=INFO
 - GitLens
 - Thunder Client (para testar APIs)
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### **Problemas Comuns**
 
@@ -534,6 +503,6 @@ lsof -ti:8001 | xargs kill -9
 
 ---
 
-**Última atualização**: 02/10/2025  
+**Última atualização**: 03/01/2025  
 **Versão**: 1.0.0  
 **Status**: Guia completo para desenvolvimento
