@@ -1,10 +1,10 @@
-#  Arquitetura do MailMind
+# Arquitetura do MailMind
 
-##  Visão Geral
+## Visão Geral
 
 O **MailMind** é um sistema inteligente de análise e curadoria de emails que utiliza IA (Google Gemini) para classificar emails como produtivos ou improdutivos e executar ações automáticas baseadas na classificação.
 
-##  Objetivos do Sistema
+## Objetivos do Sistema
 
 1. **Automatizar** a análise de emails recebidos
 2. **Classificar** emails como produtivos (requerem atenção humana) ou improdutivos (spam/lixo)
@@ -14,7 +14,7 @@ O **MailMind** é um sistema inteligente de análise e curadoria de emails que u
 4. **Processar em lote** múltiplos emails de um arquivo
 5. **Fornecer webhook** para integração com sistemas externos
 
-##  Arquitetura Geral
+## Arquitetura Geral
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -36,7 +36,7 @@ O **MailMind** é um sistema inteligente de análise e curadoria de emails que u
             └─────────────┘         └─────────────┘
 ```
 
-##  Sistema de Fallback de Email
+## Sistema de Fallback de Email
 
 O sistema implementa uma estratégia robusta de fallback para garantir que emails sempre sejam enviados:
 
@@ -65,7 +65,7 @@ Tentar Gmail → Sucesso? → Usar Gmail
 Modo Simulação → Log + Continuar
 ```
 
-##  Estrutura de Diretórios
+## Estrutura de Diretórios
 
 ```
 mailmind_ai/
@@ -99,7 +99,7 @@ mailmind_ai/
 └── render.yaml               # Configuração de deploy
 ```
 
-##  Componentes Principais
+## Componentes Principais
 
 ### 1. **Flask App (app.py)**
 
@@ -141,7 +141,7 @@ mailmind_ai/
 - **text_preprocess.py**: Pré-processamento de texto (tokenização, limpeza)
 - **email_sender.py**: Envio de emails via SMTP
 
-##  Fluxo de Dados
+## Fluxo de Dados
 
 ### Análise Individual
 
@@ -178,7 +178,7 @@ mailmind_ai/
 4. Retorna resultado JSON
 ```
 
-##  Padrões de Design Utilizados
+## Padrões de Design Utilizados
 
 ### 1. **Separation of Concerns**
 
@@ -203,7 +203,7 @@ mailmind_ai/
 - `EmailAnalyzerService` encapsula regras de negócio
 - Separa lógica de negócio da interface
 
-##  Segurança
+## Segurança
 
 ### 1. **Variáveis de Ambiente**
 
@@ -221,7 +221,7 @@ mailmind_ai/
 - Logs detalhados para debugging
 - Fallbacks para falhas de API
 
-##  Monitoramento e Logs
+## Monitoramento e Logs
 
 ### 1. **Logging Estruturado**
 
@@ -235,7 +235,7 @@ mailmind_ai/
 - Taxa de sucesso da API Gemini
 - Tempo de resposta das análises
 
-##  Escalabilidade
+## Escalabilidade
 
 ### 1. **Processamento Assíncrono** (Futuro)
 
@@ -252,7 +252,7 @@ mailmind_ai/
 - Múltiplas instâncias da aplicação
 - Distribuição de carga
 
-##  Melhorias Futuras
+## Melhorias Futuras
 
 ### 1. **Webhook Avançado** (WIP)
 
@@ -279,7 +279,7 @@ mailmind_ai/
 - Relatórios de classificação
 - Visualização de tendências
 
-##  Testes
+## Testes
 
 ### 1. **Testes Unitários**
 
@@ -293,7 +293,7 @@ mailmind_ai/
 - Testes de webhook
 - Testes de envio de email
 
-##  Convenções de Código
+## Convenções de Código
 
 ### 1. **Python**
 
@@ -313,7 +313,7 @@ mailmind_ai/
 - Imports organizados (stdlib, third-party, local)
 - Separação clara de responsabilidades
 
-##  Configuração de Desenvolvimento
+## Configuração de Desenvolvimento
 
 ### 1. **Ambiente Virtual**
 
@@ -336,7 +336,7 @@ cp .env.example .env
 python app.py
 ```
 
-##  Dependências Principais
+## Dependências Principais
 
 - **Flask**: Framework web
 - **google-generativeai**: Cliente Google Gemini
