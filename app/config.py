@@ -26,7 +26,7 @@ class AppConfig:
     max_pdf_chars: int = 50000  # Aumentado para 50k caracteres
     max_batch_size: int = 50
     smtp_timeout: int = 60  # Aumentado para 60 segundos
-    gemini_timeout: int = 600  # 10 minutos para Gemini
+        gemini_timeout: int = 60  # 1 minuto para Gemini (mais rápido)
     request_timeout: int = 600  # 10 minutos para requisições HTTP
     
     # Configurações de cache

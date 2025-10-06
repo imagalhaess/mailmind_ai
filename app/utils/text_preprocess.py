@@ -26,19 +26,19 @@ def remove_stopwords(text: str, stopwords: List[str] = None) -> str:
 
 def basic_preprocess(text: str) -> str:
     """
-    Pré-processamento OTIMIZADO: normaliza espaços e remove stopwords comuns.
-    Versão mais rápida para textos grandes.
+    Pré-processamento ULTRA OTIMIZADO: foco máximo em velocidade.
+    Versão super rápida para devs iniciantes.
     """
     # OTIMIZAÇÃO 1: Se o texto for muito grande, processa apenas uma parte
-    if len(text) > 10000:  # Se maior que 10k caracteres
-        text = text[:10000]  # Pega apenas os primeiros 10k
-        logger.info("Texto truncado para 10k caracteres para otimizar processamento")
+    if len(text) > 5000:  # Se maior que 5k caracteres (mais agressivo)
+        text = text[:5000]  # Pega apenas os primeiros 5k
+        logger.info("Texto truncado para 5k caracteres para otimizar processamento")
     
-    # OTIMIZAÇÃO 2: Normaliza espaços de uma vez só
+    # OTIMIZAÇÃO 2: Normaliza espaços de uma vez só (mais rápido)
     text = re.sub(r'\s+', ' ', text).strip()
     
-    # OTIMIZAÇÃO 3: Remove stopwords apenas se o texto não for muito grande
-    if len(text) < 5000:  # Só remove stopwords se for texto pequeno
+    # OTIMIZAÇÃO 3: Remove stopwords apenas se o texto for pequeno (mais rápido)
+    if len(text) < 2000:  # Só remove stopwords se for texto muito pequeno
         text = remove_stopwords(text)
     
     return text

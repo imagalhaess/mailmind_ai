@@ -53,21 +53,21 @@ EMAIL_SEPARATOR_PATTERN = re.compile(
 )
 
 
-def extract_text_from_pdf_safe(file_stream, max_chars: int = 50000) -> str:
+def extract_text_from_pdf_safe(file_stream, max_chars: int = 2000) -> str:
     """
-    Extrai texto do PDF de forma OTIMIZADA para ser mais rápido.
-    Versão melhorada para devs iniciantes.
+    Extrai texto do PDF de forma ULTRA OTIMIZADA para ser mais rápido.
+    Versão focada em velocidade máxima para devs iniciantes.
     """
     try:
         pdf = PyPDF2.PdfReader(file_stream)
         texto = ""
         
-        # OTIMIZAÇÃO 1: Processa apenas as primeiras páginas se o PDF for muito grande
-        max_pages = min(len(pdf.pages), 20)  # Máximo 20 páginas
+        # OTIMIZAÇÃO 1: Processa apenas as primeiras 5 páginas (muito mais rápido)
+        max_pages = min(len(pdf.pages), 5)  # Máximo 5 páginas para velocidade
         
         for i, pagina in enumerate(pdf.pages[:max_pages]):
             # OTIMIZAÇÃO 2: Para cedo se já tem texto suficiente
-            if len(texto) > max_chars * 0.8:  # Para em 80% do limite
+            if len(texto) > max_chars * 0.7:  # Para em 70% do limite
                 logger.info(f"PDF processado parcialmente: {len(texto)} chars de {max_pages} páginas")
                 break
                 
@@ -184,6 +184,26 @@ def split_multiple_emails(content: str) -> List[str]:
     
     # Caso contrário, retorna o conteúdo completo como um único email
     return [content.strip()]
+
+
+def truncate_text_for_gemini(text: str, max_chars: int = 2000) -> str:
+    """
+    Trunca texto para Gemini de forma inteligente.
+    Mantém início do email (mais importante) e remove final.
+    """
+    if len(text) <= max_chars:
+        return text
+    
+    # OTIMIZAÇÃO: Pega início do texto (mais importante para análise)
+    truncated = text[:max_chars]
+    
+    # OTIMIZAÇÃO: Tenta quebrar em ponto final para não cortar palavra
+    last_period = truncated.rfind('.')
+    if last_period > max_chars * 0.8:  # Se encontrou ponto nos últimos 20%
+        truncated = truncated[:last_period + 1]
+    
+    logger.info(f"Texto truncado de {len(text)} para {len(truncated)} caracteres")
+    return truncated
 
 
 def get_cache_key(email_content: str) -> str:
@@ -426,8 +446,15 @@ def create_app() -> Flask:
                 cached_result['cached'] = True
                 return jsonify(cached_result)
             
+            # OTIMIZAÇÃO: Trunca texto ANTES de processar (muito mais rápido)
+            truncated_email = truncate_text_for_gemini(formatted_email, 2000)
+            
             # Análise do email
-            preprocessed = basic_preprocess(formatted_email)
+            if len(truncated_email) > 1000:  # Só processa textos grandes
+                preprocessed = basic_preprocess(truncated_email)
+            else:
+                preprocessed = truncated_email
+                
             result = service.analyze(preprocessed)
             
             # O service.analyze sempre retorna um dict válido
@@ -531,11 +558,14 @@ def create_app() -> Flask:
                                 results.append(result_data)
                                 continue
                             
-                            # OTIMIZAÇÃO 3: Pré-processa apenas se necessário
-                            if len(email_content) > 1000:  # Só processa textos grandes
-                                preprocessed = basic_preprocess(email_content)
+                            # OTIMIZAÇÃO 3: Trunca texto ANTES de processar (muito mais rápido)
+                            truncated_content = truncate_text_for_gemini(email_content, 2000)
+                            
+                            # OTIMIZAÇÃO 4: Pré-processa apenas se necessário
+                            if len(truncated_content) > 1000:  # Só processa textos grandes
+                                preprocessed = basic_preprocess(truncated_content)
                             else:
-                                preprocessed = email_content
+                                preprocessed = truncated_content
                                 
                             result = service.analyze(preprocessed)
                             
@@ -600,7 +630,15 @@ def create_app() -> Flask:
                     response['cached'] = True
                     return jsonify(response)
                 
-                preprocessed = basic_preprocess(email_content)
+                # OTIMIZAÇÃO: Trunca texto ANTES de processar (muito mais rápido)
+                truncated_content = truncate_text_for_gemini(email_content, 2000)
+                
+                # OTIMIZAÇÃO: Pré-processa apenas se necessário
+                if len(truncated_content) > 1000:  # Só processa textos grandes
+                    preprocessed = basic_preprocess(truncated_content)
+                else:
+                    preprocessed = truncated_content
+                    
                 result = service.analyze(preprocessed)
                 
                 # O service.analyze agora sempre retorna um dict válido com categoria
