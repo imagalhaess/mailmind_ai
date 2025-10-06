@@ -46,7 +46,7 @@ steps:
       - '--min-instances'
       - '0'
       - '--timeout'
-      - '300'
+      - '900'
       - '--set-env-vars'
       - 'ENVIRONMENT=production'
       - '--set-secrets'

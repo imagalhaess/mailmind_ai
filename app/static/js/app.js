@@ -317,41 +317,71 @@ class EmailAnalyzer {
   }
 
   async analyzeText(emailContent, senderEmail) {
-    const response = await fetch("/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email_content: emailContent,
-        sender: senderEmail || undefined,
-      }),
-    });
+    // Criar AbortController para timeout de 10 minutos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutos
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+      const response = await fetch("/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email_content: emailContent,
+          sender: senderEmail || undefined,
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error("Timeout: A análise está demorando mais que o esperado. Tente com um arquivo menor.");
+      }
+      throw error;
     }
-
-    return await response.json();
   }
 
   async uploadFile(file) {
     const formData = new FormData();
     formData.append("email_file", file); // Corrigido: usar 'email_file' como esperado pelo backend
 
-    const response = await fetch("/analyze", {
-      method: "POST",
-      body: formData,
-    });
+    // Criar AbortController para timeout de 10 minutos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutos
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error || `HTTP error! status: ${response.status}`
-      );
+    try {
+      const response = await fetch("/analyze", {
+        method: "POST",
+        body: formData,
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error("Timeout: A análise está demorando mais que o esperado. Tente com um arquivo menor.");
+      }
+      throw error;
     }
-
-    return await response.json();
   }
 
   async runTest(testType) {

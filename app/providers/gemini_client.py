@@ -13,7 +13,7 @@ class GeminiClient:
     """
     api_key: str
     model_name: str
-    timeout: int = 120  # 2 minutos de timeout (reduzido de 10 minutos)
+    timeout: int = 600  # 10 minutos de timeout para análise de arquivos grandes
 
     def __post_init__(self) -> None:
         # 1. Configura a API Key globalmente

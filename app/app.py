@@ -1,3 +1,17 @@
+"""
+MailMind AI - Sistema de Análise Inteligente de E-mails
+
+Este arquivo contém as funções principais para:
+- Upload e processamento de arquivos (.txt e .pdf)
+- Análise de e-mails usando IA (Google Gemini)
+- APIs para integração com outros sistemas
+
+Para devs iniciantes:
+- As funções de upload limitam o tamanho dos arquivos para evitar travamentos
+- O processamento de PDF é feito de forma segura, cortando textos muito longos
+- Sempre há tratamento de erro para evitar que a aplicação quebre
+"""
+
 import io
 import os
 import json
@@ -39,69 +53,78 @@ EMAIL_SEPARATOR_PATTERN = re.compile(
 )
 
 
-def extract_text_from_pdf_safe(file_stream, max_chars: int = 20000) -> str:
+def extract_text_from_pdf_safe(file_stream, max_chars: int = 50000) -> str:
     """
-    Extrai texto de PDF de forma segura, limitando o tamanho para evitar timeouts
-    e falhas de memória.
+    Extrai texto do PDF, limitando caracteres para evitar travar o app.
+    Versão simplificada e mais clara para devs iniciantes.
     """
     try:
-        pdf_reader = PyPDF2.PdfReader(file_stream)
-        text = ""
+        pdf = PyPDF2.PdfReader(file_stream)
+        texto = ""
         
-        for page in pdf_reader.pages:
-            page_text = page.extract_text() or ""
-            text += page_text
+        for pagina in pdf.pages:
+            texto += pagina.extract_text() or ""
             
             # Para se atingir o limite de caracteres
-            if len(text) > max_chars:
-                text = text[:max_chars]
-                logger.warning(f"PDF truncado em {max_chars} caracteres")
+            if len(texto) > max_chars:
+                texto = texto[:max_chars]
+                logger.warning(f"PDF cortado em {max_chars} caracteres")
                 break
                 
-        # Garante que não haja quebras de linha duplas desnecessárias
-        return re.sub(r'\n\s*\n', '\n', text).strip()
+        return texto.strip()
     except Exception as e:
-        logger.error(f"Erro ao processar PDF: {e}")
+        logger.error(f"Erro PDF: {e}")
         return ""
 
 
-def read_text_from_upload(max_file_size_mb: int = 2) -> Tuple[str, str]:
+def read_text_from_upload(max_file_size_mb: int = 10) -> Tuple[str, str]:
     """
-    Lê o conteúdo do upload suportando .txt/.pdf, campo de texto e JSON.
+    Lê conteúdo de .txt ou .pdf enviado pelo usuário.
     Retorna (conteudo, origem) para logging.
+    Versão simplificada e mais clara para devs iniciantes.
     """
-    # Suporte a JSON (API)
+    # Se veio texto pelo formulário
+    if request.form.get("email_text"):
+        return request.form["email_text"], "text"
+    
+    # Se veio JSON (API)
     if request.is_json:
         data = request.get_json()
         if data and "email_content" in data:
             return data["email_content"], "json"
-    
-    # Suporte a formulário (interface web)
-    if request.form.get("email_text"):
-        return request.form["email_text"], "text"
 
+    # Se veio arquivo
     file = request.files.get("email_file")
     if not file or file.filename == "":
         return "", "none"
     
-    # Limite de tamanho de arquivo
-    max_size_bytes = max_file_size_mb * 1024 * 1024
-    
-    # Lê o arquivo em memória para verificar tamanho real
+    # Limita o tamanho para não travar a aplicação
     file_data = file.read()
-    if len(file_data) > max_size_bytes:
+    if len(file_data) > max_file_size_mb * 1024 * 1024:
+        logger.warning(f"Arquivo muito grande: {len(file_data)} bytes")
         return "", "file_too_large"
     
+    # Verifica tipo do arquivo (txt ou pdf)
     filename = file.filename.lower()
-
+    
     if filename.endswith(".txt"):
-        return file_data.decode("utf-8", errors="ignore"), "txt"
+        try:
+            return file_data.decode("utf-8", errors="ignore"), "txt"
+        except Exception as e:
+            logger.error(f"Erro ao decodificar TXT: {e}")
+            return "", "txt_error"
     elif filename.endswith(".pdf"):
-        with io.BytesIO(file_data) as buf:
-            text = extract_text_from_pdf_safe(buf)
-        return text, "pdf"
-
-    return "", "unsupported"
+        try:
+            with io.BytesIO(file_data) as buf:
+                texto = extract_text_from_pdf_safe(buf)
+            return texto, "pdf"
+        except Exception as e:
+            logger.error(f"Erro ao processar PDF: {e}")
+            return "", "pdf_error"
+    else:
+        # Se não for .txt nem .pdf, já retorna erro sem complicar
+        logger.warning(f"Tipo de arquivo não suportado: {filename}")
+        return "", "unsupported"
 
 
 def extract_sender_from_email(email_content: str) -> str:
@@ -244,7 +267,8 @@ def create_app() -> Flask:
     # 1. Configuração do Gemini Client
     client = GeminiClient(
         api_key=config.gemini_api_key, 
-        model_name=config.model_name
+        model_name=config.model_name,
+        timeout=config.gemini_timeout
     )
     service = EmailAnalyzerService(client=client)
     

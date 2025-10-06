@@ -22,10 +22,12 @@ class AppConfig:
     port: int = 8001
     
     # Configurações de performance
-    max_file_size_mb: int = 2
-    max_pdf_chars: int = 20000
+    max_file_size_mb: int = 10  # Aumentado para 10MB
+    max_pdf_chars: int = 50000  # Aumentado para 50k caracteres
     max_batch_size: int = 50
-    smtp_timeout: int = 30
+    smtp_timeout: int = 60  # Aumentado para 60 segundos
+    gemini_timeout: int = 600  # 10 minutos para Gemini
+    request_timeout: int = 600  # 10 minutos para requisições HTTP
     
     # Configurações de cache
     cache_type: str = "SimpleCache"
@@ -75,10 +77,12 @@ def load_config(dotenv_path: Optional[str] = None) -> AppConfig:
     port = int(os.getenv("PORT", "8001"))
     
     # Performance Configuration
-    max_file_size_mb = int(os.getenv("MAX_FILE_SIZE_MB", "2"))
-    max_pdf_chars = int(os.getenv("MAX_PDF_CHARS", "20000"))
+    max_file_size_mb = int(os.getenv("MAX_FILE_SIZE_MB", "10"))
+    max_pdf_chars = int(os.getenv("MAX_PDF_CHARS", "50000"))
     max_batch_size = int(os.getenv("MAX_BATCH_SIZE", "50"))
-    smtp_timeout = int(os.getenv("SMTP_TIMEOUT", "30"))
+    smtp_timeout = int(os.getenv("SMTP_TIMEOUT", "60"))
+    gemini_timeout = int(os.getenv("GEMINI_TIMEOUT", "600"))
+    request_timeout = int(os.getenv("REQUEST_TIMEOUT", "600"))
     
     # Cache Configuration
     cache_type = os.getenv("CACHE_TYPE", "SimpleCache")
@@ -113,6 +117,8 @@ def load_config(dotenv_path: Optional[str] = None) -> AppConfig:
         max_pdf_chars=max_pdf_chars,
         max_batch_size=max_batch_size,
         smtp_timeout=smtp_timeout,
+        gemini_timeout=gemini_timeout,
+        request_timeout=request_timeout,
         cache_type=cache_type,
         cache_default_timeout=cache_default_timeout,
         redis_url=redis_url,
