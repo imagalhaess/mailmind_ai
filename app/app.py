@@ -538,46 +538,46 @@ def create_app() -> Flask:
                                 preprocessed = email_content
                                 
                             result = service.analyze(preprocessed)
-                        
-                        # O service.analyze sempre retorna um dict válido
-                        categoria = result.get("categoria", "N/A")
-                        atencao = result.get("atencao_humana", "NÃO")
-                        resumo = result.get("resumo", "N/A")
-                        sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
-                        
-                        if atencao.upper() == "SIM":
-                            acao_msg = "📧 Encaminhar para curadoria humana"
-                        elif categoria.lower() == "spam":
-                            acao_msg = "🚫 Spam detectado"
-                        else:
-                            acao_msg = "✅ Processado"
-                        
-                        result_data = {
-                            "categoria": categoria,
-                            "atencao_humana": atencao,
-                            "resumo": resumo,
-                            "sugestao": sugestao,
-                            "sender": sender,
-                            "acao": acao_msg,
-                            "cached": False
-                        }
-                        
-                        # Armazena no cache
-                        cache.set(cache_key, {"result": result_data}, timeout=config.cache_default_timeout)
-                        
-                        results.append(result_data)
-                        
-                    except Exception as e:
-                        logger.error(f"Erro ao analisar email: {e}")
-                        results.append({
-                            "categoria": "❌ ERRO",
-                            "atencao_humana": "SIM",
-                            "resumo": f"Falha na análise: {str(e)[:100]}",
-                            "sugestao": "Verifique o conteúdo e tente novamente",
-                            "sender": "Não identificado",
-                            "acao": "⚠️ Erro no processamento",
-                            "cached": False
-                        })
+                            
+                            # O service.analyze sempre retorna um dict válido
+                            categoria = result.get("categoria", "N/A")
+                            atencao = result.get("atencao_humana", "NÃO")
+                            resumo = result.get("resumo", "N/A")
+                            sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+                            
+                            if atencao.upper() == "SIM":
+                                acao_msg = "📧 Encaminhar para curadoria humana"
+                            elif categoria.lower() == "spam":
+                                acao_msg = "🚫 Spam detectado"
+                            else:
+                                acao_msg = "✅ Processado"
+                            
+                            result_data = {
+                                "categoria": categoria,
+                                "atencao_humana": atencao,
+                                "resumo": resumo,
+                                "sugestao": sugestao,
+                                "sender": sender,
+                                "acao": acao_msg,
+                                "cached": False
+                            }
+                            
+                            # Armazena no cache
+                            cache.set(cache_key, {"result": result_data}, timeout=config.cache_default_timeout)
+                            
+                            results.append(result_data)
+                            
+                        except Exception as e:
+                            logger.error(f"Erro ao analisar email: {e}")
+                            results.append({
+                                "categoria": "❌ ERRO",
+                                "atencao_humana": "SIM",
+                                "resumo": f"Falha na análise: {str(e)[:100]}",
+                                "sugestao": "Verifique o conteúdo e tente novamente",
+                                "sender": "Não identificado",
+                                "acao": "⚠️ Erro no processamento",
+                                "cached": False
+                            })
                 
                 return jsonify({
                     "total_emails": len(emails),
