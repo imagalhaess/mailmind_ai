@@ -18,7 +18,10 @@ import json
 import logging
 import re
 import hashlib
-from typing import Tuple, Any, List, Optional
+import uuid
+import threading
+import time
+from typing import Tuple, Any, List, Optional, Dict
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory
 from flask_limiter import Limiter
@@ -42,6 +45,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Sistema de Jobs Assíncronos (simples em memória)
+JOBS: Dict[str, Dict] = {}
+JOBS_LOCK = threading.Lock()
+
 # Regex compiladas para melhor performance
 EMAIL_PATTERN = re.compile(
     r'From:\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})',
@@ -53,91 +60,62 @@ EMAIL_SEPARATOR_PATTERN = re.compile(
 )
 
 
-def extract_text_from_pdf_safe(file_stream, max_chars: int = 2000) -> str:
-    """
-    Extrai texto do PDF de forma ULTRA OTIMIZADA para ser mais rápido.
-    Versão focada em velocidade máxima para devs iniciantes.
-    """
+def extract_text_from_pdf_safe(file_stream, max_chars: int = 1000) -> str:
+    """Extrai texto do PDF de forma ultra rápida."""
     try:
         pdf = PyPDF2.PdfReader(file_stream)
         texto = ""
         
-        # OTIMIZAÇÃO 1: Processa apenas as primeiras 5 páginas (muito mais rápido)
-        max_pages = min(len(pdf.pages), 5)  # Máximo 5 páginas para velocidade
-        
-        for i, pagina in enumerate(pdf.pages[:max_pages]):
-            # OTIMIZAÇÃO 2: Para cedo se já tem texto suficiente
-            if len(texto) > max_chars * 0.7:  # Para em 70% do limite
-                logger.info(f"PDF processado parcialmente: {len(texto)} chars de {max_pages} páginas")
+        # Processa apenas as primeiras 3 páginas
+        for i, pagina in enumerate(pdf.pages[:3]):
+            if len(texto) > max_chars:
                 break
-                
             page_text = pagina.extract_text() or ""
             texto += page_text
             
-            # OTIMIZAÇÃO 3: Para imediatamente se atingir o limite
-            if len(texto) > max_chars:
-                texto = texto[:max_chars]
-                logger.warning(f"PDF cortado em {max_chars} caracteres (página {i+1})")
-                break
-                
-        # OTIMIZAÇÃO 4: Limpa espaços extras de uma vez só
-        return re.sub(r'\s+', ' ', texto).strip()
-    except Exception as e:
-        logger.error(f"Erro PDF: {e}")
+        return re.sub(r'\s+', ' ', texto[:max_chars]).strip()
+    except:
         return ""
 
 
-def read_text_from_upload(max_file_size_mb: int = 10) -> Tuple[str, str]:
-    """
-    Lê conteúdo de .txt ou .pdf enviado pelo usuário.
-    Retorna (conteudo, origem) para logging.
-    Versão simplificada e mais clara para devs iniciantes.
-    """
-    # Se veio texto pelo formulário
+def read_text_from_upload(max_file_size_mb: int = 5) -> Tuple[str, str]:
+    """Lê conteúdo de .txt ou .pdf de forma rápida."""
+    # Texto do formulário
     if request.form.get("email_text"):
         return request.form["email_text"], "text"
     
-    # Se veio JSON (API)
+    # JSON (API)
     if request.is_json:
         data = request.get_json()
         if data and "email_content" in data:
             return data["email_content"], "json"
 
-    # Se veio arquivo
+    # Arquivo
     file = request.files.get("email_file")
     if not file or file.filename == "":
         return "", "none"
     
-    # OTIMIZAÇÃO 1: Validação rápida do tipo de arquivo ANTES de ler
     filename = file.filename.lower()
     if not (filename.endswith(".txt") or filename.endswith(".pdf")):
-        logger.warning(f"Tipo de arquivo não suportado: {filename}")
         return "", "unsupported"
     
-    # OTIMIZAÇÃO 2: Lê arquivo em chunks para não travar a memória
     file_data = file.read()
     if len(file_data) > max_file_size_mb * 1024 * 1024:
-        logger.warning(f"Arquivo muito grande: {len(file_data)} bytes")
         return "", "file_too_large"
     
-    # Processa o arquivo baseado no tipo
     if filename.endswith(".txt"):
         try:
             return file_data.decode("utf-8", errors="ignore"), "txt"
-        except Exception as e:
-            logger.error(f"Erro ao decodificar TXT: {e}")
+        except:
             return "", "txt_error"
     elif filename.endswith(".pdf"):
         try:
             with io.BytesIO(file_data) as buf:
                 texto = extract_text_from_pdf_safe(buf)
             return texto, "pdf"
-        except Exception as e:
-            logger.error(f"Erro ao processar PDF: {e}")
+        except:
             return "", "pdf_error"
     else:
-        # Se não for .txt nem .pdf, já retorna erro sem complicar
-        logger.warning(f"Tipo de arquivo não suportado: {filename}")
         return "", "unsupported"
 
 
@@ -186,36 +164,80 @@ def split_multiple_emails(content: str) -> List[str]:
     return [content.strip()]
 
 
-def truncate_text_for_gemini(text: str, max_chars: int = 2000) -> str:
-    """
-    Trunca texto para Gemini de forma inteligente.
-    Mantém início do email (mais importante) e remove final.
-    """
+def truncate_text_for_gemini(text: str, max_chars: int = 1000) -> str:
+    """Trunca texto para Gemini de forma rápida."""
     if len(text) <= max_chars:
         return text
     
-    # OTIMIZAÇÃO: Pega início do texto (mais importante para análise)
     truncated = text[:max_chars]
-    
-    # OTIMIZAÇÃO: Tenta quebrar em ponto final para não cortar palavra
     last_period = truncated.rfind('.')
-    if last_period > max_chars * 0.8:  # Se encontrou ponto nos últimos 20%
+    if last_period > max_chars * 0.8:
         truncated = truncated[:last_period + 1]
     
-    logger.info(f"Texto truncado de {len(text)} para {len(truncated)} caracteres")
     return truncated
 
 
 def get_cache_key(email_content: str) -> str:
-    """
-    Gera chave de cache OTIMIZADA baseada no hash do conteúdo.
-    Versão mais rápida para devs iniciantes.
-    """
-    # OTIMIZAÇÃO: Usa apenas os primeiros 1000 caracteres para gerar hash
-    # Isso torna o cache mais eficiente para textos similares
-    content_sample = email_content[:1000] if len(email_content) > 1000 else email_content
+    """Gera chave de cache rápida."""
+    content_sample = email_content[:500] if len(email_content) > 500 else email_content
     content_hash = hashlib.sha256(content_sample.encode('utf-8')).hexdigest()
-    return f"analysis:{content_hash[:12]}"  # Chave menor = mais rápida
+    return f"analysis:{content_hash[:8]}"
+
+
+def process_email_async(job_id: str, email_content: str, service, cache, config):
+    """Processa email em background."""
+    try:
+        with JOBS_LOCK:
+            JOBS[job_id]["status"] = "processing"
+        
+        # Trunca texto
+        truncated = truncate_text_for_gemini(email_content, 1000)
+        
+        # Pré-processa se necessário
+        if len(truncated) > 500:
+            preprocessed = basic_preprocess(truncated)
+        else:
+            preprocessed = truncated
+        
+        # Analisa
+        result = service.analyze(preprocessed)
+        
+        # Processa resultado
+        categoria = result.get("categoria", "N/A")
+        atencao = result.get("atencao_humana", "NÃO")
+        resumo = result.get("resumo", "N/A")
+        sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+        
+        if atencao.upper() == "SIM":
+            acao = "📧 Encaminhar para curadoria humana"
+        elif categoria.lower() == "spam":
+            acao = "🚫 Spam detectado"
+        else:
+            acao = "✅ Processado com sucesso"
+        
+        result_data = {
+            "categoria": categoria,
+            "atencao_humana": atencao,
+            "resumo": resumo,
+            "sugestao": sugestao,
+            "acao": acao,
+            "sender": extract_sender_from_email(email_content) or 'Não identificado',
+            "cached": False
+        }
+        
+        # Cache
+        cache_key = get_cache_key(email_content)
+        cache.set(cache_key, result_data, timeout=config.cache_default_timeout)
+        
+        # Atualiza job
+        with JOBS_LOCK:
+            JOBS[job_id]["status"] = "completed"
+            JOBS[job_id]["result"] = result_data
+            
+    except Exception as e:
+        with JOBS_LOCK:
+            JOBS[job_id]["status"] = "error"
+            JOBS[job_id]["error"] = str(e)
 
 
 def require_api_key(f):
@@ -407,12 +429,30 @@ def create_app() -> Flask:
     @app.route("/analyze/status/<job_id>", methods=["GET"])
     def analyze_status(job_id):
         """Consulta o status de um job de análise assíncrona."""
-        # Em produção, consultaria o banco de dados ou cache
-        return jsonify({
-            "job_id": job_id,
-            "status": "completed",
-            "message": "Implementação completa requer Celery ou similar"
-        })
+        with JOBS_LOCK:
+            job = JOBS.get(job_id)
+            
+        if not job:
+            return jsonify({"error": "Job não encontrado"}), 404
+        
+        if job["status"] == "completed":
+            return jsonify({
+                "job_id": job_id,
+                "status": "completed",
+                "result": job["result"]
+            })
+        elif job["status"] == "error":
+            return jsonify({
+                "job_id": job_id,
+                "status": "error",
+                "error": job["error"]
+            })
+        else:
+            return jsonify({
+                "job_id": job_id,
+                "status": job["status"],
+                "message": "Processando..."
+            })
     
     @app.route("/webhook/email", methods=["POST"])
     @app.limiter.limit("30 per minute")
@@ -442,66 +482,34 @@ def create_app() -> Flask:
             cached_result = cache.get(cache_key)
             
             if cached_result:
-                logger.info("Resultado retornado do cache")
                 cached_result['cached'] = True
                 return jsonify(cached_result)
             
-            # OTIMIZAÇÃO: Trunca texto ANTES de processar (muito mais rápido)
-            truncated_email = truncate_text_for_gemini(formatted_email, 2000)
+            # Processa assincronamente
+            job_id = str(uuid.uuid4())[:8]
             
-            # Análise do email
-            if len(truncated_email) > 1000:  # Só processa textos grandes
-                preprocessed = basic_preprocess(truncated_email)
-            else:
-                preprocessed = truncated_email
-                
-            result = service.analyze(preprocessed)
+            with JOBS_LOCK:
+                JOBS[job_id] = {
+                    "status": "queued",
+                    "email_content": formatted_email
+                }
             
-            # O service.analyze sempre retorna um dict válido
-            if not result:
-                return jsonify({
-                    "status": "error",
-                    "message": "Falha na análise do Gemini"
-                }), 500
+            # Inicia processamento em background
+            thread = threading.Thread(
+                target=process_email_async,
+                args=(job_id, formatted_email, service, cache, config)
+            )
+            thread.daemon = True
+            thread.start()
             
-            categoria = result.get("categoria", "N/A")
-            atencao = result.get("atencao_humana", "NÃO")
-            resumo = result.get("resumo", "N/A")
-            sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
-            
-            # Determina ação
-            if atencao.upper() == "SIM":
-                acao = "📧 Encaminhar para curadoria humana"
-            elif categoria.lower() == "spam":
-                acao = "🚫 Spam detectado - nenhuma ação necessária"
-            else:
-                acao = "✅ Processado com sucesso"
-            
-            response_data = {
-                "status": "success",
-                "message": "Email analisado via webhook",
-                "result": {
-                    "categoria": categoria,
-                    "atencao_humana": atencao,
-                    "resumo": resumo,
-                    "sugestao": sugestao,
-                    "acao": acao,
-                    "sender": sender
-                },
-                "cached": False
-            }
-            
-            # Armazena no cache
-            cache.set(cache_key, response_data, timeout=config.cache_default_timeout)
-            
-            return jsonify(response_data)
+            return jsonify({
+                "job_id": job_id,
+                "status": "queued",
+                "message": "Email em processamento. Use /analyze/status/{job_id} para verificar progresso."
+            })
             
         except Exception as e:
-            logger.error(f"Erro no webhook: {e}", exc_info=True)
-            return jsonify({
-                "error": "Erro interno do servidor",
-                "message": "Falha ao processar o email"
-            }), 500
+            return jsonify({"error": "Erro interno do servidor"}), 500
     
     @app.route("/analyze", methods=["POST"])
     @app.limiter.limit("20 per minute")
@@ -512,172 +520,98 @@ def create_app() -> Flask:
             
             if not raw_text:
                 if origin == "file_too_large":
-                    return jsonify({
-                        "error": f"📁 Arquivo muito grande. Limite de {config.max_file_size_mb}MB."
-                    }), 400
+                    return jsonify({"error": f"📁 Arquivo muito grande. Limite de {config.max_file_size_mb}MB."}), 400
                 elif origin == "unsupported":
-                    return jsonify({
-                        "error": "📝 Formato não suportado. Use .txt ou .pdf"
-                    }), 400
-                return jsonify({
-                    "error": "📝 Envie um arquivo .txt/.pdf ou cole o texto do e-mail."
-                }), 400
+                    return jsonify({"error": "📝 Formato não suportado. Use .txt ou .pdf"}), 400
+                return jsonify({"error": "📝 Envie um arquivo .txt/.pdf ou cole o texto do e-mail."}), 400
             
             # Detecta múltiplos emails
             emails = split_multiple_emails(raw_text)
             
-            # Limita o número de emails em lote
-            if len(emails) > config.max_batch_size:
-                return jsonify({
-                    "error": f"⚠️ Limite de {config.max_batch_size} emails por lote excedido",
-                    "found": len(emails),
-                    "limit": config.max_batch_size
-                }), 400
+            # Limita emails
+            if len(emails) > 10:  # Reduzido para 10 emails
+                return jsonify({"error": f"⚠️ Limite de 10 emails por lote excedido"}), 400
             
+            # Para múltiplos emails, usa processamento assíncrono
             if len(emails) > 1:
-                # OTIMIZAÇÃO: Análise em lote com processamento mais eficiente
-                results = []
-                
-                # OTIMIZAÇÃO 1: Processa emails em lotes menores para evitar timeout
-                batch_size = min(5, len(emails))  # Máximo 5 emails por vez
-                
-                for i in range(0, len(emails), batch_size):
-                    batch_emails = emails[i:i + batch_size]
+                job_ids = []
+                for email_content in emails:
+                    job_id = str(uuid.uuid4())[:8]
                     
-                    for email_content in batch_emails:
-                        try:
-                            sender = extract_sender_from_email(email_content) or 'Não identificado'
-                            
-                            # OTIMIZAÇÃO 2: Verifica cache primeiro (mais rápido)
-                            cache_key = get_cache_key(email_content)
-                            cached_result = cache.get(cache_key)
-                            
-                            if cached_result and 'result' in cached_result:
-                                result_data = cached_result['result']
-                                result_data['cached'] = True
-                                results.append(result_data)
-                                continue
-                            
-                            # OTIMIZAÇÃO 3: Trunca texto ANTES de processar (muito mais rápido)
-                            truncated_content = truncate_text_for_gemini(email_content, 2000)
-                            
-                            # OTIMIZAÇÃO 4: Pré-processa apenas se necessário
-                            if len(truncated_content) > 1000:  # Só processa textos grandes
-                                preprocessed = basic_preprocess(truncated_content)
-                            else:
-                                preprocessed = truncated_content
-                                
-                            result = service.analyze(preprocessed)
-                            
-                            # O service.analyze sempre retorna um dict válido
-                            categoria = result.get("categoria", "N/A")
-                            atencao = result.get("atencao_humana", "NÃO")
-                            resumo = result.get("resumo", "N/A")
-                            sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
-                            
-                            if atencao.upper() == "SIM":
-                                acao_msg = "📧 Encaminhar para curadoria humana"
-                            elif categoria.lower() == "spam":
-                                acao_msg = "🚫 Spam detectado"
-                            else:
-                                acao_msg = "✅ Processado"
-                            
-                            result_data = {
-                                "categoria": categoria,
-                                "atencao_humana": atencao,
-                                "resumo": resumo,
-                                "sugestao": sugestao,
-                                "sender": sender,
-                                "acao": acao_msg,
-                                "cached": False
+                    # Verifica cache primeiro
+                    cache_key = get_cache_key(email_content)
+                    cached_result = cache.get(cache_key)
+                    
+                    if cached_result:
+                        # Se tem cache, processa imediatamente
+                        result_data = cached_result.copy()
+                        result_data['cached'] = True
+                        
+                        with JOBS_LOCK:
+                            JOBS[job_id] = {
+                                "status": "completed",
+                                "result": result_data
                             }
-                            
-                            # Armazena no cache
-                            cache.set(cache_key, {"result": result_data}, timeout=config.cache_default_timeout)
-                            
-                            results.append(result_data)
-                            
-                        except Exception as e:
-                            logger.error(f"Erro ao analisar email: {e}")
-                            results.append({
-                                "categoria": "❌ ERRO",
-                                "atencao_humana": "SIM",
-                                "resumo": f"Falha na análise: {str(e)[:100]}",
-                                "sugestao": "Verifique o conteúdo e tente novamente",
-                                "sender": "Não identificado",
-                                "acao": "⚠️ Erro no processamento",
-                                "cached": False
-                            })
+                    else:
+                        # Se não tem cache, processa em background
+                        with JOBS_LOCK:
+                            JOBS[job_id] = {
+                                "status": "queued",
+                                "email_content": email_content
+                            }
+                        
+                        # Inicia processamento em background
+                        thread = threading.Thread(
+                            target=process_email_async,
+                            args=(job_id, email_content, service, cache, config)
+                        )
+                        thread.daemon = True
+                        thread.start()
+                    
+                    job_ids.append(job_id)
                 
                 return jsonify({
+                    "job_ids": job_ids,
                     "total_emails": len(emails),
-                    "results": results,
-                    "message": f"✅ Análise concluída para {len(emails)} email(s)"
+                    "message": "✅ Análise iniciada. Use /analyze/status/{job_id} para verificar progresso."
                 })
             
             else:
-                # Análise individual
+                # Análise individual - tenta cache primeiro
                 email_content = emails[0]
-                sender = extract_sender_from_email(email_content) or 'Não identificado'
-                
-                # Verifica cache
                 cache_key = get_cache_key(email_content)
                 cached_result = cache.get(cache_key)
                 
                 if cached_result:
-                    logger.info("Resultado retornado do cache")
                     response = cached_result.copy()
                     response['cached'] = True
                     return jsonify(response)
                 
-                # OTIMIZAÇÃO: Trunca texto ANTES de processar (muito mais rápido)
-                truncated_content = truncate_text_for_gemini(email_content, 2000)
+                # Se não tem cache, processa assincronamente
+                job_id = str(uuid.uuid4())[:8]
                 
-                # OTIMIZAÇÃO: Pré-processa apenas se necessário
-                if len(truncated_content) > 1000:  # Só processa textos grandes
-                    preprocessed = basic_preprocess(truncated_content)
-                else:
-                    preprocessed = truncated_content
-                    
-                result = service.analyze(preprocessed)
+                with JOBS_LOCK:
+                    JOBS[job_id] = {
+                        "status": "queued",
+                        "email_content": email_content
+                    }
                 
-                # O service.analyze agora sempre retorna um dict válido com categoria
-                if not result:
-                    raise Exception("Falha na análise do Gemini")
+                # Inicia processamento em background
+                thread = threading.Thread(
+                    target=process_email_async,
+                    args=(job_id, email_content, service, cache, config)
+                )
+                thread.daemon = True
+                thread.start()
                 
-                categoria = result.get("categoria", "N/A")
-                atencao = result.get("atencao_humana", "NÃO")
-                resumo = result.get("resumo", "N/A")
-                sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
-                
-                if atencao.upper() == "SIM":
-                    acao = "📧 Encaminhar para curadoria humana"
-                elif categoria.lower() == "spam":
-                    acao = "🚫 Spam detectado"
-                else:
-                    acao = "✅ Processado com sucesso"
-                
-                response_data = {
-                    "categoria": categoria,
-                    "atencao_humana": atencao,
-                    "resumo": resumo,
-                    "sugestao": sugestao,
-                    "acao": acao,
-                    "sender": sender,
-                    "cached": False
-                }
-                
-                # Armazena no cache
-                cache.set(cache_key, response_data, timeout=config.cache_default_timeout)
-                
-                return jsonify(response_data)
+                return jsonify({
+                    "job_id": job_id,
+                    "status": "queued",
+                    "message": "✅ Análise iniciada. Use /analyze/status/{job_id} para verificar progresso."
+                })
                 
         except Exception as e:
-            logger.error(f"Erro na análise: {e}", exc_info=True)
-            return jsonify({
-                "error": "❌ Erro interno do servidor",
-                "message": "Falha ao processar o email"
-            }), 500
+            return jsonify({"error": "❌ Erro interno do servidor"}), 500
     
     @app.route("/test/<test_type>")
     @app.limiter.limit("60 per minute")

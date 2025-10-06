@@ -317,10 +317,6 @@ class EmailAnalyzer {
   }
 
   async analyzeText(emailContent, senderEmail) {
-    // Criar AbortController para timeout de 10 minutos
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutos
-
     try {
       const response = await fetch("/analyze", {
         method: "POST",
@@ -330,42 +326,35 @@ class EmailAnalyzer {
         body: JSON.stringify({
           email_content: emailContent,
           sender: senderEmail || undefined,
-        }),
-        signal: controller.signal
+        })
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        throw new Error("Timeout: A análise está demorando mais que o esperado. Tente com um arquivo menor.");
+      const result = await response.json();
+      
+      // Se retornou job_id, aguarda processamento
+      if (result.job_id) {
+        return await this.waitForJob(result.job_id);
       }
+      
+      return result;
+    } catch (error) {
       throw error;
     }
   }
 
   async uploadFile(file) {
     const formData = new FormData();
-    formData.append("email_file", file); // Corrigido: usar 'email_file' como esperado pelo backend
-
-    // Criar AbortController para timeout de 10 minutos
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutos
+    formData.append("email_file", file);
 
     try {
       const response = await fetch("/analyze", {
         method: "POST",
-        body: formData,
-        signal: controller.signal
+        body: formData
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -374,12 +363,20 @@ class EmailAnalyzer {
         );
       }
 
-      return await response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        throw new Error("Timeout: A análise está demorando mais que o esperado. Tente com um arquivo menor.");
+      const result = await response.json();
+      
+      // Se retornou job_ids (múltiplos emails), aguarda todos
+      if (result.job_ids) {
+        return await this.waitForMultipleJobs(result.job_ids);
       }
+      
+      // Se retornou job_id (email único), aguarda processamento
+      if (result.job_id) {
+        return await this.waitForJob(result.job_id);
+      }
+      
+      return result;
+    } catch (error) {
       throw error;
     }
   }
@@ -428,7 +425,72 @@ class EmailAnalyzer {
       );
     }
 
-    return await response.json();
+    const result = await response.json();
+    
+    // Se retornou job_id, aguarda processamento
+    if (result.job_id) {
+      return await this.waitForJob(result.job_id);
+    }
+    
+    return result;
+  }
+
+  async waitForJob(jobId) {
+    const maxAttempts = 60; // 60 tentativas = 1 minuto
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+      try {
+        const response = await fetch(`/analyze/status/${jobId}`);
+        const status = await response.json();
+        
+        if (status.status === "completed") {
+          return status.result;
+        } else if (status.status === "error") {
+          throw new Error(status.error || "Erro no processamento");
+        }
+        
+        // Aguarda 1 segundo antes da próxima tentativa
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        attempts++;
+        
+      } catch (error) {
+        if (attempts >= maxAttempts - 1) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        attempts++;
+      }
+    }
+    
+    throw new Error("Timeout: Análise demorou mais que o esperado");
+  }
+
+  async waitForMultipleJobs(jobIds) {
+    const results = [];
+    
+    for (const jobId of jobIds) {
+      try {
+        const result = await this.waitForJob(jobId);
+        results.push(result);
+      } catch (error) {
+        results.push({
+          categoria: "❌ ERRO",
+          atencao_humana: "SIM",
+          resumo: `Falha na análise: ${error.message}`,
+          sugestao: "Verifique o conteúdo e tente novamente",
+          sender: "Não identificado",
+          acao: "⚠️ Erro no processamento",
+          cached: false
+        });
+      }
+    }
+    
+    return {
+      total_emails: jobIds.length,
+      results: results,
+      message: `✅ Análise concluída para ${jobIds.length} email(s)`
+    };
   }
 
   showResult(result) {
