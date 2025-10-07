@@ -334,12 +334,6 @@ class EmailAnalyzer {
       }
 
       const result = await response.json();
-      
-      // Se retornou job_id, aguarda processamento
-      if (result.job_id) {
-        return await this.waitForJob(result.job_id);
-      }
-      
       return result;
     } catch (error) {
       throw error;
@@ -364,17 +358,6 @@ class EmailAnalyzer {
       }
 
       const result = await response.json();
-      
-      // Se retornou job_ids (múltiplos emails), aguarda todos
-      if (result.job_ids) {
-        return await this.waitForMultipleJobs(result.job_ids);
-      }
-      
-      // Se retornou job_id (email único), aguarda processamento
-      if (result.job_id) {
-        return await this.waitForJob(result.job_id);
-      }
-      
       return result;
     } catch (error) {
       throw error;

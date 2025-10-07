@@ -366,6 +366,16 @@ def create_app() -> Flask:
         """Página inicial."""
         return send_from_directory('static', 'index.html')
     
+    @app.route("/test-route")
+    def test_route():
+        """Rota de teste para verificar se o deploy está funcionando."""
+        return jsonify({"message": "Rota de teste funcionando!", "timestamp": "2025-01-06"})
+    
+    @app.route("/analyze/status/test")
+    def test_status_route():
+        """Teste específico para a rota de status."""
+        return jsonify({"message": "Rota de status funcionando!", "job_id": "test"})
+    
     @app.route("/health")
     def health():
         """Endpoint de health check para monitoramento."""
@@ -419,7 +429,7 @@ def create_app() -> Flask:
             return jsonify({
                 "job_id": job_id,
                 "status": "processing",
-                "message": "Análise iniciada. Use /analyze/status/{job_id} para verificar progresso."
+                "message": "Análise iniciada. Use /analyze/status/<job_id> para verificar progresso."
             }), 202
             
         except Exception as e:
@@ -505,7 +515,7 @@ def create_app() -> Flask:
             return jsonify({
                 "job_id": job_id,
                 "status": "queued",
-                "message": "Email em processamento. Use /analyze/status/{job_id} para verificar progresso."
+                "message": "Email em processamento. Use /analyze/status/<job_id> para verificar progresso."
             })
             
         except Exception as e:
@@ -532,52 +542,72 @@ def create_app() -> Flask:
             if len(emails) > 10:  # Reduzido para 10 emails
                 return jsonify({"error": f"⚠️ Limite de 10 emails por lote excedido"}), 400
             
-            # Para múltiplos emails, usa processamento assíncrono
+            # Para múltiplos emails, processa diretamente
             if len(emails) > 1:
-                job_ids = []
+                results = []
+                
                 for email_content in emails:
-                    job_id = str(uuid.uuid4())[:8]
-                    
-                    # Verifica cache primeiro
-                    cache_key = get_cache_key(email_content)
-                    cached_result = cache.get(cache_key)
-                    
-                    if cached_result:
-                        # Se tem cache, processa imediatamente
-                        result_data = cached_result.copy()
-                        result_data['cached'] = True
+                    try:
+                        # Verifica cache primeiro
+                        cache_key = get_cache_key(email_content)
+                        cached_result = cache.get(cache_key)
                         
-                        with JOBS_LOCK:
-                            JOBS[job_id] = {
-                                "status": "completed",
-                                "result": result_data
+                        if cached_result:
+                            result_data = cached_result.copy()
+                            result_data['cached'] = True
+                            results.append(result_data)
+                        else:
+                            # Processa diretamente
+                            truncated = truncate_text_for_gemini(email_content, 1000)
+                            preprocessed = basic_preprocess(truncated) if len(truncated) > 500 else truncated
+                            
+                            result = service.analyze(preprocessed)
+                            
+                            categoria = result.get("categoria", "N/A")
+                            atencao = result.get("atencao_humana", "NÃO")
+                            resumo = result.get("resumo", "N/A")
+                            sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+                            
+                            if atencao.upper() == "SIM":
+                                acao = "📧 Encaminhar para curadoria humana"
+                            elif categoria.lower() == "spam":
+                                acao = "🚫 Spam detectado"
+                            else:
+                                acao = "✅ Processado com sucesso"
+                            
+                            result_data = {
+                                "categoria": categoria,
+                                "atencao_humana": atencao,
+                                "resumo": resumo,
+                                "sugestao": sugestao,
+                                "acao": acao,
+                                "sender": extract_sender_from_email(email_content) or 'Não identificado',
+                                "cached": False
                             }
-                    else:
-                        # Se não tem cache, processa em background
-                        with JOBS_LOCK:
-                            JOBS[job_id] = {
-                                "status": "queued",
-                                "email_content": email_content
-                            }
-                        
-                        # Inicia processamento em background
-                        thread = threading.Thread(
-                            target=process_email_async,
-                            args=(job_id, email_content, service, cache, config)
-                        )
-                        thread.daemon = True
-                        thread.start()
-                    
-                    job_ids.append(job_id)
+                            
+                            cache.set(cache_key, result_data, timeout=config.cache_default_timeout)
+                            results.append(result_data)
+                            
+                    except Exception as e:
+                        logger.error(f"Erro ao processar email: {e}")
+                        results.append({
+                            "categoria": "❌ ERRO",
+                            "atencao_humana": "SIM",
+                            "resumo": f"Falha na análise: {str(e)}",
+                            "sugestao": "Verifique o conteúdo e tente novamente",
+                            "sender": "Não identificado",
+                            "acao": "⚠️ Erro no processamento",
+                            "cached": False
+                        })
                 
                 return jsonify({
-                    "job_ids": job_ids,
                     "total_emails": len(emails),
-                    "message": "✅ Análise iniciada. Use /analyze/status/{job_id} para verificar progresso."
+                    "results": results,
+                    "message": f"✅ Análise concluída para {len(emails)} email(s)"
                 })
             
             else:
-                # Análise individual - tenta cache primeiro
+                # Análise individual - processa diretamente
                 email_content = emails[0]
                 cache_key = get_cache_key(email_content)
                 cached_result = cache.get(cache_key)
@@ -587,28 +617,49 @@ def create_app() -> Flask:
                     response['cached'] = True
                     return jsonify(response)
                 
-                # Se não tem cache, processa assincronamente
-                job_id = str(uuid.uuid4())[:8]
-                
-                with JOBS_LOCK:
-                    JOBS[job_id] = {
-                        "status": "queued",
-                        "email_content": email_content
+                # Processa diretamente
+                try:
+                    truncated = truncate_text_for_gemini(email_content, 1000)
+                    preprocessed = basic_preprocess(truncated) if len(truncated) > 500 else truncated
+                    
+                    result = service.analyze(preprocessed)
+                    
+                    categoria = result.get("categoria", "N/A")
+                    atencao = result.get("atencao_humana", "NÃO")
+                    resumo = result.get("resumo", "N/A")
+                    sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+                    
+                    if atencao.upper() == "SIM":
+                        acao = "📧 Encaminhar para curadoria humana"
+                    elif categoria.lower() == "spam":
+                        acao = "🚫 Spam detectado"
+                    else:
+                        acao = "✅ Processado com sucesso"
+                    
+                    response = {
+                        "categoria": categoria,
+                        "atencao_humana": atencao,
+                        "resumo": resumo,
+                        "sugestao": sugestao,
+                        "acao": acao,
+                        "sender": extract_sender_from_email(email_content) or 'Não identificado',
+                        "cached": False
                     }
-                
-                # Inicia processamento em background
-                thread = threading.Thread(
-                    target=process_email_async,
-                    args=(job_id, email_content, service, cache, config)
-                )
-                thread.daemon = True
-                thread.start()
-                
-                return jsonify({
-                    "job_id": job_id,
-                    "status": "queued",
-                    "message": "✅ Análise iniciada. Use /analyze/status/{job_id} para verificar progresso."
-                })
+                    
+                    cache.set(cache_key, response, timeout=config.cache_default_timeout)
+                    return jsonify(response)
+                    
+                except Exception as e:
+                    logger.error(f"Erro na análise: {e}")
+                    return jsonify({
+                        "categoria": "❌ ERRO",
+                        "atencao_humana": "SIM",
+                        "resumo": f"Falha na análise: {str(e)}",
+                        "sugestao": "Verifique o conteúdo e tente novamente",
+                        "sender": "Não identificado",
+                        "acao": "⚠️ Erro no processamento",
+                        "cached": False
+                    })
                 
         except Exception as e:
             return jsonify({"error": "❌ Erro interno do servidor"}), 500

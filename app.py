@@ -13,6 +13,5 @@ from app import create_app
 
 if __name__ == "__main__":
     app = create_app()
-    port = int(os.getenv("PORT", 8000))
-    print(f"🚀 Iniciando MailMind em http://0.0.0.0:{port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
