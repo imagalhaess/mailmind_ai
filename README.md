@@ -3,6 +3,8 @@
 **Versão**: 2.1.0  
 **Status**: Ativo e em manutenção
 
+🌐 **Aplicação Online**: [https://mailmind-cxpdayn66a-uc.a.run.app/](https://mailmind-cxpdayn66a-uc.a.run.app/)
+
 O MailMind AI é um sistema de análise e curadoria de e-mails que utiliza a IA do Google Gemini para classificar mensagens, resumir conteúdos e sugerir ações, otimizando o fluxo de trabalho de caixas de entrada corporativas.
 
 Esta versão foi completamente refatorada para operar em um ambiente de produção robusto, com foco em **segurança**, **performance** e **escalabilidade**.
@@ -29,11 +31,11 @@ A aplicação foi re-arquitetada para seguir as melhores práticas de desenvolvi
 - **Cache**: **Redis** é utilizado para cachear os resultados das análises, diminuindo a latência e o consumo da API do Gemini.
 - **Segurança**: Múltiplas camadas de segurança, incluindo `Flask-Limiter` para proteção contra abuso e suporte a `API Keys` para endpoints críticos.
 - **Containerização**: **Docker** é usado para criar um ambiente de execução consistente e simplificar o deploy.
-- **Cloud**: A aplicação está otimizada para deploy no **Google Cloud Run**, com um pipeline de CI/CD configurado via **GitHub Actions**.
+- **Cloud**: A aplicação está otimizada para deploy no **Google Cloud Run**, com um pipeline de CI/CD configurado via **Google Cloud Build**.
 
 ## Pré-requisitos
 
-- Python 3.11+ (para execução local)
+- Python 3.11 (para execução local)
 - Docker (opcional, para execução em container)
 - Conta no Google Cloud Platform (para deploy)
 - Chave de API do Google Gemini
@@ -78,6 +80,8 @@ Para execução local, você pode usar Python diretamente ou Docker.
 4.  **Acesse a aplicação:**
 
     Acesse [http://localhost:8080](http://localhost:8080) no seu navegador.
+
+    **Nota**: O `wsgi.py` usa porta 8080 por padrão. Para usar a porta 8001 (configuração do config.py), execute: `python -m app`
 
 ### Opção 2: Docker
 
@@ -150,30 +154,31 @@ Para fazer o deploy manualmente, utilize o script `deploy.sh`.
 
 ### Deploy Automático (CI/CD)
 
-O deploy é acionado automaticamente a cada `push` na branch `main`. Para que funcione, é necessário configurar os seguintes **secrets no seu repositório do GitHub**:
-
-- `GCP_PROJECT_ID`: O ID do seu projeto no Google Cloud (`mailmind-ai-474220`).
-- `GCP_SA_KEY`: A chave JSON da sua Service Account do Google Cloud com permissões para Cloud Build, Cloud Run e Secret Manager.
-
-Além disso, os seguintes secrets devem ser criados no **Google Secret Manager** dentro do seu projeto:
+O deploy é acionado automaticamente via **Google Cloud Build** quando você faz push para o repositório. Para que funcione, é necessário configurar os seguintes **secrets no Google Secret Manager** dentro do seu projeto:
 
 - `GEMINI_API_KEY`: Sua chave da API do Gemini.
 - `SMTP_PASSWORD`: A senha do seu servidor SMTP (se for usar o envio de e-mails).
+
+**Configuração do Cloud Build:**
+
+1. Habilite as APIs necessárias no Google Cloud Console
+2. Configure o trigger do Cloud Build para o seu repositório
+3. O arquivo `cloudbuild.yaml` já está configurado para o deploy automático
 
 ## Estrutura do Projeto
 
 ```
 mailmind_ai/
-├── .github/workflows/main.yml  # Workflow de CI/CD
 ├── app/                        # Código da aplicação Flask
 │   ├── __init__.py
 │   ├── app.py                  # Factory da aplicação e rotas
 │   ├── config.py               # Configuração centralizada
 │   ├── providers/              # Clientes de serviços externos (Gemini)
 │   ├── services/               # Lógica de negócio
+│   ├── static/                 # Arquivos da interface web (HTML, CSS, JS)
 │   └── utils/                  # Funções utilitárias
 ├── tests/                      # Testes automatizados
-├── static/                     # Arquivos da interface web (CSS, JS)
+├── docs/                       # Documentação técnica
 ├── Dockerfile                  # Define a imagem de produção
 ├── cloudbuild.yaml             # Configuração para Google Cloud Build
 ├── deploy.sh                   # Script para deploy manual
