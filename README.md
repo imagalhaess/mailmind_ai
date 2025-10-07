@@ -9,16 +9,16 @@ Esta versão foi completamente refatorada para operar em um ambiente de produç�
 
 ## Funcionalidades Principais
 
-| Funcionalidade | Descrição |
-| :--- | :--- |
-| **Classificação Automática** | Categoriza e-mails em `Produtivo`, `Spam`, `Reclamação`, `Consulta`, `Urgente` e `Outro`. |
-| **Análise com IA** | Utiliza o Google Gemini para gerar resumos, extrair intenções e sugerir ações específicas. |
-| **Interface Web Intuitiva** | Permite o upload de arquivos `.txt` e `.pdf` ou a inserção de texto diretamente para análise. |
-| **Análise em Lote** | Capacidade de processar múltiplos e-mails de uma só vez, separados por `---` ou `From:`. |
-| **Segurança Robusta** | Implementa `rate limiting`, validação de `API key` e configuração de `CORS` para proteger a aplicação. |
-| **Performance Otimizada** | Utiliza cache com Redis para reduzir a latência e os custos com a API do Gemini. |
-| **Testes Automatizados** | Suíte de testes com `pytest` para garantir a estabilidade e a confiabilidade do código. |
-| **Pronto para Produção** | Otimizado para deploy em contêineres com Docker e orquestração no Google Cloud Run. |
+| Funcionalidade               | Descrição                                                                                              |
+| :--------------------------- | :----------------------------------------------------------------------------------------------------- |
+| **Classificação Automática** | Categoriza e-mails em `Produtivo`, `Spam`, `Reclamação`, `Consulta`, `Urgente` e `Outro`.              |
+| **Análise com IA**           | Utiliza o Google Gemini para gerar resumos, extrair intenções e sugerir ações específicas.             |
+| **Interface Web Intuitiva**  | Permite o upload de arquivos `.txt` e `.pdf` ou a inserção de texto diretamente para análise.          |
+| **Análise em Lote**          | Capacidade de processar múltiplos e-mails de uma só vez, separados por `---` ou `From:`.               |
+| **Segurança Robusta**        | Implementa `rate limiting`, validação de `API key` e configuração de `CORS` para proteger a aplicação. |
+| **Performance Otimizada**    | Utiliza cache com Redis para reduzir a latência e os custos com a API do Gemini.                       |
+| **Testes Automatizados**     | Suíte de testes com `pytest` para garantir a estabilidade e a confiabilidade do código.                |
+| **Pronto para Produção**     | Otimizado para deploy em contêineres com Docker e orquestração no Google Cloud Run.                    |
 
 ## Arquitetura da Solução
 
@@ -33,14 +33,17 @@ A aplicação foi re-arquitetada para seguir as melhores práticas de desenvolvi
 
 ## Pré-requisitos
 
-- Docker e Docker Compose
+- Python 3.11+ (para execução local)
+- Docker (opcional, para execução em container)
 - Conta no Google Cloud Platform (para deploy)
 - Chave de API do Google Gemini
-- `gcloud` CLI instalado e configurado
+- `gcloud` CLI instalado e configurado (para deploy)
 
 ## Instalação e Execução Local
 
-O método recomendado para execução local é utilizando Docker e Docker Compose, que simplifica a configuração do ambiente, incluindo o Redis.
+Para execução local, você pode usar Python diretamente ou Docker.
+
+### Opção 1: Python Direto
 
 1.  **Clone o repositório:**
 
@@ -51,34 +54,59 @@ O método recomendado para execução local é utilizando Docker e Docker Compos
 
 2.  **Configure as variáveis de ambiente:**
 
-    Crie um arquivo `.env` a partir do exemplo. A variável `GEMINI_API_KEY` é obrigatória.
+    Crie um arquivo `.env` com suas configurações. A variável `GEMINI_API_KEY` é obrigatória.
 
     ```bash
-    cp .env.example .env
-    # Edite o arquivo .env com sua chave da API do Gemini
+    # Crie o arquivo .env
+    echo "GEMINI_API_KEY=sua_chave_aqui" > .env
     ```
 
-3.  **Inicie os containers:**
+3.  **Instale as dependências e execute:**
 
     ```bash
-    docker-compose up --build
+    # Crie e ative um ambiente virtual
+    python3 -m venv venv
+    source venv/bin/activate  # No Windows: venv\Scripts\activate
+
+    # Instale as dependências
+    pip install -r requirements.txt
+
+    # Execute a aplicação
+    python wsgi.py
     ```
 
 4.  **Acesse a aplicação:**
 
     Acesse [http://localhost:8080](http://localhost:8080) no seu navegador.
 
+### Opção 2: Docker
+
+1.  **Clone e configure:**
+
+    ```bash
+    git clone https://github.com/imagalhaess/mailmind_ai.git
+    cd mailmind_ai
+    echo "GEMINI_API_KEY=sua_chave_aqui" > .env
+    ```
+
+2.  **Build e execute:**
+
+    ```bash
+    docker build -t mailmind .
+    docker run -p 8080:8080 --env-file .env mailmind
+    ```
+
 ## Testes Automatizados
 
 O projeto possui uma suíte de testes automatizados para garantir a qualidade e a estabilidade do código. Para executar os testes:
 
-1.  **Instale as dependências de desenvolvimento:**
+1.  **Instale as dependências:**
 
     ```bash
     # Crie e ative um ambiente virtual (recomendado)
     python3 -m venv venv
     source venv/bin/activate
-    
+
     # Instale as dependências
     pip install -r requirements.txt
     ```
@@ -124,13 +152,13 @@ Para fazer o deploy manualmente, utilize o script `deploy.sh`.
 
 O deploy é acionado automaticamente a cada `push` na branch `main`. Para que funcione, é necessário configurar os seguintes **secrets no seu repositório do GitHub**:
 
--   `GCP_PROJECT_ID`: O ID do seu projeto no Google Cloud (`mailmind-ai-474220`).
--   `GCP_SA_KEY`: A chave JSON da sua Service Account do Google Cloud com permissões para Cloud Build, Cloud Run e Secret Manager.
+- `GCP_PROJECT_ID`: O ID do seu projeto no Google Cloud (`mailmind-ai-474220`).
+- `GCP_SA_KEY`: A chave JSON da sua Service Account do Google Cloud com permissões para Cloud Build, Cloud Run e Secret Manager.
 
 Além disso, os seguintes secrets devem ser criados no **Google Secret Manager** dentro do seu projeto:
 
--   `GEMINI_API_KEY`: Sua chave da API do Gemini.
--   `SMTP_PASSWORD`: A senha do seu servidor SMTP (se for usar o envio de e-mails).
+- `GEMINI_API_KEY`: Sua chave da API do Gemini.
+- `SMTP_PASSWORD`: A senha do seu servidor SMTP (se for usar o envio de e-mails).
 
 ## Estrutura do Projeto
 
@@ -147,11 +175,10 @@ mailmind_ai/
 ├── tests/                      # Testes automatizados
 ├── static/                     # Arquivos da interface web (CSS, JS)
 ├── Dockerfile                  # Define a imagem de produção
-├── docker-compose.yml          # Orquestração para ambiente local
 ├── cloudbuild.yaml             # Configuração para Google Cloud Build
 ├── deploy.sh                   # Script para deploy manual
-├── requirements.txt            # Dependências de produção (gerado)
-├── requirements.in             # Dependências de desenvolvimento
+├── requirements.txt            # Dependências Python
+├── wsgi.py                     # Entry point para produção
 └── README.md                   # Esta documentação
 ```
 
@@ -160,4 +187,3 @@ mailmind_ai/
 Este projeto foi desenvolvido por Isabela Mattos como parte de um case de desenvolvimento técnico.
 Foram utilizados todos os meios de pesquisa disponíveis.
 Agradecimentos especiais à comunidade de código aberto.
-

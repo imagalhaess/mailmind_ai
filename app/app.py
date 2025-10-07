@@ -18,10 +18,7 @@ import json
 import logging
 import re
 import hashlib
-import uuid
-import threading
-import time
-from typing import Tuple, Any, List, Optional, Dict
+from typing import Tuple, Any, List, Optional
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory
 from flask_limiter import Limiter
@@ -45,9 +42,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Sistema de Jobs Assíncronos (simples em memória)
-JOBS: Dict[str, Dict] = {}
-JOBS_LOCK = threading.Lock()
+# Sistema de Jobs Assíncronos removido - usando processamento síncrono
 
 # Regex compiladas para melhor performance
 EMAIL_PATTERN = re.compile(
@@ -184,60 +179,7 @@ def get_cache_key(email_content: str) -> str:
     return f"analysis:{content_hash[:8]}"
 
 
-def process_email_async(job_id: str, email_content: str, service, cache, config):
-    """Processa email em background."""
-    try:
-        with JOBS_LOCK:
-            JOBS[job_id]["status"] = "processing"
-        
-        # Trunca texto
-        truncated = truncate_text_for_gemini(email_content, 1000)
-        
-        # Pré-processa se necessário
-        if len(truncated) > 500:
-            preprocessed = basic_preprocess(truncated)
-        else:
-            preprocessed = truncated
-        
-        # Analisa
-        result = service.analyze(preprocessed)
-        
-        # Processa resultado
-        categoria = result.get("categoria", "N/A")
-        atencao = result.get("atencao_humana", "NÃO")
-        resumo = result.get("resumo", "N/A")
-        sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
-        
-        if atencao.upper() == "SIM":
-            acao = "📧 Encaminhar para curadoria humana"
-        elif categoria.lower() == "spam":
-            acao = "🚫 Spam detectado"
-        else:
-            acao = "✅ Processado com sucesso"
-        
-        result_data = {
-            "categoria": categoria,
-            "atencao_humana": atencao,
-            "resumo": resumo,
-            "sugestao": sugestao,
-            "acao": acao,
-            "sender": extract_sender_from_email(email_content) or 'Não identificado',
-            "cached": False
-        }
-        
-        # Cache
-        cache_key = get_cache_key(email_content)
-        cache.set(cache_key, result_data, timeout=config.cache_default_timeout)
-        
-        # Atualiza job
-        with JOBS_LOCK:
-            JOBS[job_id]["status"] = "completed"
-            JOBS[job_id]["result"] = result_data
-            
-    except Exception as e:
-        with JOBS_LOCK:
-            JOBS[job_id]["status"] = "error"
-            JOBS[job_id]["error"] = str(e)
+# Função de processamento assíncrono removida - usando processamento síncrono
 
 
 def require_api_key(f):
@@ -406,63 +348,7 @@ def create_app() -> Flask:
                 'error': str(e)
             }), 500
     
-    @app.route("/analyze/async", methods=["POST"])
-    @app.limiter.limit("10 per minute")
-    def analyze_async():
-        """
-        Endpoint para análise assíncrona de emails grandes.
-        Retorna um ID de job para consulta posterior.
-        """
-        try:
-            raw_text, origin = read_text_from_upload(config.max_file_size_mb)
-            
-            if not raw_text:
-                return jsonify({"error": "Conteúdo não encontrado"}), 400
-            
-            # Gera ID único para o job
-            import uuid
-            job_id = str(uuid.uuid4())[:8]
-            
-            # Simula processamento assíncrono (em produção, usaria Celery ou similar)
-            logger.info(f"Job {job_id} iniciado para análise assíncrona")
-            
-            return jsonify({
-                "job_id": job_id,
-                "status": "processing",
-                "message": "Análise iniciada. Use /analyze/status/<job_id> para verificar progresso."
-            }), 202
-            
-        except Exception as e:
-            logger.error(f"Erro na análise assíncrona: {e}")
-            return jsonify({"error": "Erro interno"}), 500
-    
-    @app.route("/analyze/status/<job_id>", methods=["GET"])
-    def analyze_status(job_id):
-        """Consulta o status de um job de análise assíncrona."""
-        with JOBS_LOCK:
-            job = JOBS.get(job_id)
-            
-        if not job:
-            return jsonify({"error": "Job não encontrado"}), 404
-        
-        if job["status"] == "completed":
-            return jsonify({
-                "job_id": job_id,
-                "status": "completed",
-                "result": job["result"]
-            })
-        elif job["status"] == "error":
-            return jsonify({
-                "job_id": job_id,
-                "status": "error",
-                "error": job["error"]
-            })
-        else:
-            return jsonify({
-                "job_id": job_id,
-                "status": job["status"],
-                "message": "Processando..."
-            })
+    # Rotas de jobs assíncronos removidas - usando processamento síncrono
     
     @app.route("/webhook/email", methods=["POST"])
     @app.limiter.limit("30 per minute")
@@ -495,28 +381,49 @@ def create_app() -> Flask:
                 cached_result['cached'] = True
                 return jsonify(cached_result)
             
-            # Processa assincronamente
-            job_id = str(uuid.uuid4())[:8]
-            
-            with JOBS_LOCK:
-                JOBS[job_id] = {
-                    "status": "queued",
-                    "email_content": formatted_email
+            # Processa diretamente (síncrono)
+            try:
+                truncated = truncate_text_for_gemini(formatted_email, 1000)
+                preprocessed = basic_preprocess(truncated) if len(truncated) > 500 else truncated
+                
+                result = service.analyze(preprocessed)
+                
+                categoria = result.get("categoria", "N/A")
+                atencao = result.get("atencao_humana", "NÃO")
+                resumo = result.get("resumo", "N/A")
+                sugestao = result.get("sugestao_resposta_ou_acao", "N/A")
+                
+                if atencao.upper() == "SIM":
+                    acao = "📧 Encaminhar para curadoria humana"
+                elif categoria.lower() == "spam":
+                    acao = "🚫 Spam detectado"
+                else:
+                    acao = "✅ Processado com sucesso"
+                
+                result_data = {
+                    "categoria": categoria,
+                    "atencao_humana": atencao,
+                    "resumo": resumo,
+                    "sugestao": sugestao,
+                    "acao": acao,
+                    "sender": extract_sender_from_email(formatted_email) or 'Não identificado',
+                    "cached": False
                 }
-            
-            # Inicia processamento em background
-            thread = threading.Thread(
-                target=process_email_async,
-                args=(job_id, formatted_email, service, cache, config)
-            )
-            thread.daemon = True
-            thread.start()
-            
-            return jsonify({
-                "job_id": job_id,
-                "status": "queued",
-                "message": "Email em processamento. Use /analyze/status/<job_id> para verificar progresso."
-            })
+                
+                cache.set(cache_key, result_data, timeout=config.cache_default_timeout)
+                return jsonify(result_data)
+                
+            except Exception as e:
+                logger.error(f"Erro na análise do webhook: {e}")
+                return jsonify({
+                    "categoria": "❌ ERRO",
+                    "atencao_humana": "SIM",
+                    "resumo": f"Falha na análise: {str(e)}",
+                    "sugestao": "Verifique o conteúdo e tente novamente",
+                    "sender": "Não identificado",
+                    "acao": "⚠️ Erro no processamento",
+                    "cached": False
+                })
             
         except Exception as e:
             return jsonify({"error": "Erro interno do servidor"}), 500

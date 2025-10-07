@@ -326,7 +326,7 @@ class EmailAnalyzer {
         body: JSON.stringify({
           email_content: emailContent,
           sender: senderEmail || undefined,
-        })
+        }),
       });
 
       if (!response.ok) {
@@ -347,7 +347,7 @@ class EmailAnalyzer {
     try {
       const response = await fetch("/analyze", {
         method: "POST",
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
@@ -409,72 +409,12 @@ class EmailAnalyzer {
     }
 
     const result = await response.json();
-    
-    // Se retornou job_id, aguarda processamento
-    if (result.job_id) {
-      return await this.waitForJob(result.job_id);
-    }
-    
+
+    // Processamento agora é síncrono, retorna resultado diretamente
     return result;
   }
 
-  async waitForJob(jobId) {
-    const maxAttempts = 60; // 60 tentativas = 1 minuto
-    let attempts = 0;
-    
-    while (attempts < maxAttempts) {
-      try {
-        const response = await fetch(`/analyze/status/${jobId}`);
-        const status = await response.json();
-        
-        if (status.status === "completed") {
-          return status.result;
-        } else if (status.status === "error") {
-          throw new Error(status.error || "Erro no processamento");
-        }
-        
-        // Aguarda 1 segundo antes da próxima tentativa
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        attempts++;
-        
-      } catch (error) {
-        if (attempts >= maxAttempts - 1) {
-          throw error;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        attempts++;
-      }
-    }
-    
-    throw new Error("Timeout: Análise demorou mais que o esperado");
-  }
-
-  async waitForMultipleJobs(jobIds) {
-    const results = [];
-    
-    for (const jobId of jobIds) {
-      try {
-        const result = await this.waitForJob(jobId);
-        results.push(result);
-      } catch (error) {
-        results.push({
-          categoria: "❌ ERRO",
-          atencao_humana: "SIM",
-          resumo: `Falha na análise: ${error.message}`,
-          sugestao: "Verifique o conteúdo e tente novamente",
-          sender: "Não identificado",
-          acao: "⚠️ Erro no processamento",
-          cached: false
-        });
-      }
-    }
-    
-    return {
-      total_emails: jobIds.length,
-      results: results,
-      message: `✅ Análise concluída para ${jobIds.length} email(s)`
-    };
-  }
+  // Funções de polling removidas - processamento agora é síncrono
 
   showResult(result) {
     const resultsSection = document.getElementById("results");
@@ -532,13 +472,14 @@ class EmailAnalyzer {
   formatSingleResult(result) {
     // Determina se é produtivo ou improdutivo baseado na categoria
     const categoria = result.categoria ? result.categoria.toLowerCase() : "";
-    
+
     // Categorias improdutivas: spam, erro, outro (quando não identificado)
     const isImprodutivo = categoria === "spam" || categoria === "erro";
-    
+
     // Categorias produtivas: produtivo, consulta, reclamação, urgente, etc.
-    const isProdutivo = !isImprodutivo && categoria !== "" && categoria !== "n/a";
-    
+    const isProdutivo =
+      !isImprodutivo && categoria !== "" && categoria !== "n/a";
+
     let statusClass, statusText;
     if (isImprodutivo) {
       statusClass = "improdutivo";
@@ -576,19 +517,15 @@ class EmailAnalyzer {
 
   formatBatchResultsWithResults(result) {
     // Conta emails produtivos e improdutivos baseado na categoria
-    const improdutivos = result.results.filter(
-      (r) => {
-        const cat = r.categoria ? r.categoria.toLowerCase() : "";
-        return cat === "spam" || cat === "erro";
-      }
-    ).length;
-    
-    const produtivos = result.results.filter(
-      (r) => {
-        const cat = r.categoria ? r.categoria.toLowerCase() : "";
-        return cat !== "spam" && cat !== "erro" && cat !== "" && cat !== "n/a";
-      }
-    ).length;
+    const improdutivos = result.results.filter((r) => {
+      const cat = r.categoria ? r.categoria.toLowerCase() : "";
+      return cat === "spam" || cat === "erro";
+    }).length;
+
+    const produtivos = result.results.filter((r) => {
+      const cat = r.categoria ? r.categoria.toLowerCase() : "";
+      return cat !== "spam" && cat !== "erro" && cat !== "" && cat !== "n/a";
+    }).length;
 
     let html = `
             <div class="result-item">
@@ -613,19 +550,15 @@ class EmailAnalyzer {
 
   formatBatchResults(result) {
     // Conta emails produtivos e improdutivos baseado na categoria
-    const improdutivos = result.resultados.filter(
-      (r) => {
-        const cat = r.categoria ? r.categoria.toLowerCase() : "";
-        return cat === "spam" || cat === "erro";
-      }
-    ).length;
-    
-    const produtivos = result.resultados.filter(
-      (r) => {
-        const cat = r.categoria ? r.categoria.toLowerCase() : "";
-        return cat !== "spam" && cat !== "erro" && cat !== "" && cat !== "n/a";
-      }
-    ).length;
+    const improdutivos = result.resultados.filter((r) => {
+      const cat = r.categoria ? r.categoria.toLowerCase() : "";
+      return cat === "spam" || cat === "erro";
+    }).length;
+
+    const produtivos = result.resultados.filter((r) => {
+      const cat = r.categoria ? r.categoria.toLowerCase() : "";
+      return cat !== "spam" && cat !== "erro" && cat !== "" && cat !== "n/a";
+    }).length;
 
     let html = `
             <div class="result-item">
